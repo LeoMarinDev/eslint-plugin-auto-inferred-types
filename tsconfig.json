@@ -1,0 +1,23 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"lib": ["ES2022"],
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"strict": true,
+		"strictNullChecks": true,
+		"noEmit": true,
+		"isolatedModules": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
+		"noFallthroughCasesInSwitch": true,
+		"useUnknownInCatchVariables": true,
+		"paths": {
+			"@types-internal/*": ["./src/types/*"],
+			"@config/*": ["./src/config/*"]
+		}
+	},
+	"include": ["src"],
+	"exclude": ["node_modules"]
+}

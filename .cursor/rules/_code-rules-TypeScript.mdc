@@ -90,7 +90,7 @@ import type {
 	ValhallaMatrixRequestParams,
 	ValhallaMatrixResponse,
 	RequestParams,
-} from "@types/valhalla/valhalla-matrix-types";
+} from "@types-internal/valhalla/valhalla-matrix-types";
 
 import {
 	HTTP_METHOD_GET,
@@ -181,7 +181,7 @@ export interface LogRequestParams {
 // file: ./src/logging/log-request.ts (imports types only; no configuration literals in this slice)
 import type {
 	LogRequestParams,
-} from "@types/logging/log-request-params-types";
+} from "@types-internal/logging/log-request-params-types";
 
 /**
  * Logs the details of an incoming request. This is a utility function used by other loggers.
@@ -299,7 +299,7 @@ export type Weekday =
 // file: ./src/config/calendar/weekday-order.ts (exports ordered list; imports `Weekday`)
 import type {
 	Weekday,
-} from "@types/time/weekday-types";
+} from "@types-internal/time/weekday-types";
 
 export const WEEKDAYS: Weekday[] = [
 	"sunday",
@@ -314,7 +314,7 @@ export const WEEKDAYS: Weekday[] = [
 // file: ./src/handlers/demo-object-literals.ts (imports matrix request type for object literal shape only)
 import type {
 	ValhallaMatrixRequestParams,
-} from "@types/valhalla/valhalla-matrix-types";
+} from "@types-internal/valhalla/valhalla-matrix-types";
 
 const matrixParams: ValhallaMatrixRequestParams = {
 	sources,
@@ -428,7 +428,7 @@ for (
 import type {
 	FetchDataBody,
 	RowsByIdMapSerialized,
-} from "@types/dynamic-sql-builder/fetch-data-types";
+} from "@types-internal/dynamic-sql-builder/fetch-data-types";
 
 // file: `./src/handlers/sql/handle-fetch-data-request-v04.ts` - signature fragment demonstrates trailing comma only
 async function handleFetchDataRequestV04(
@@ -453,7 +453,7 @@ Example Code Snippet:
 import type {
 	CoordinatesPoint,
 	TransformedTripPlaces,
-} from "@types/trips/trip-places-types";
+} from "@types-internal/trips/trip-places-types";
 
 
 // const object destructuring - all variables are constant
@@ -498,7 +498,8 @@ if (
 - Group imports (e.g. external packages, then internal modules), separated by blank lines.
 - **Import order**: ESLint enforces grouping and alphabetization via `import/order`. **Do not manually reorder imports.** Run `npx eslint PATH_FILE --fix` so ESLint applies `import/order` with `--fix` (replace `PATH_FILE` with the target path). For multiple changed files, pass every path: `npx eslint --fix PATH1 PATH2`. See **Post-edit validation** for the full check workflow after edits.
 - Use `import type { ... }` for types that are erased at compile time; you may use inline `type` in a value import when importing both values and types from the same module.
-- **Path aliases for internal modules**: import shared code with **stable alias specifiers** (strings that begin with **`@`** once, then use **`/`** for further segments), for example `"@api-types"`, `"@db-handling/query-handler-rls"`, **`@types/…`** for `./src/types/**`, **`@config/…`** for `./src/config/**`, and **`@classNames/…`** for `./src/styles/classNames/**`. Do **not** reach internal or workspace code through ascending relative paths (`"../…"`, `"../../…"`). Keep the set of alias roots **small and consistent** so moves between folders do not rewrite import strings.
+- **Path aliases for internal modules**: import shared code with **stable alias specifiers** (strings that begin with **`@`** once, then use **`/`** for further segments), for example `"@api-types"`, `"@db-handling/query-handler-rls"`, **`@types-internal/…`** for `./src/types/**`, **`@config/…`** for `./src/config/**`, and **`@classNames/…`** for `./src/styles/classNames/**`. Do **not** reach internal or workspace code through ascending relative paths (`"../…"`, `"../../…"`). Keep the set of alias roots **small and consistent** so moves between folders do not rewrite import strings.
+- **Why `@types-internal` instead of `@types`**: TypeScript reserves the **`@types/*`** specifier prefix for DefinitelyTyped packages in `node_modules/@types/` and intercepts it before consulting `compilerOptions.paths`, so any `import ... from "@types/..."` raises **TS6137** ("Cannot import type declaration files") regardless of the `paths` mapping. Use **`@types-internal/…`** (or another non-`@types` prefix) for the project's own `./src/types/**` so `paths` resolution works.
 - **TypeScript configuration**: register every alias under `compilerOptions.paths` and set `compilerOptions.baseUrl` (typically `"."`) so `tsc` and the language service resolve imports and emit consistent declarations. When an alias names a directory tree, use matching wildcard patterns in `paths` (for example `"@foo/*": ["packages/foo/*"]`). Point each mapping at the real paths in your repo (`src/…`, `packages/…`, and so on), including every root you rely on in source.
 - **`paths` is not runtime**: Node and other runtimes do **not** read `tsconfig.json`. The same specifiers must also be understood by whatever **executes** or **bundles** the program: for example bundler `resolve.alias` (or a plugin that reads `tsconfig` paths), `tsx` / `ts-node` with `tsconfig-paths` (or equivalent), a build step that rewrites specifiers, or **workspace packages** with real package names. If you run plain `tsc` emit without path rewriting, emitted files still contain the alias strings; ensure the deployment pipeline or loader can resolve them.
 - **Node ESM without a bundler**: use **`package.json` `"imports"`** for subpath specifiers Node resolves natively (the usual convention is **`#…`** keys). Mirror those specifiers in `paths` toward your `.ts` sources so types and runtime agree.
@@ -515,7 +516,7 @@ Example `compilerOptions` illustration (adjust paths to your layout):
 			"@dynamic-sql-builder/*": ["packages/dynamic-sql-builder/*"],
 			"@auth/*": ["src/auth/*"],
 			"@environment/*": ["src/environment/*"],
-			"@types/*": ["src/types/*"],
+			"@types-internal/*": ["src/types/*"],
 			"@config/*": ["src/config/*"],
 			"@states/*": ["src/states/*"],
 			"@content/*": ["src/content/*"],
@@ -548,7 +549,7 @@ import {
 import type {
 	AuthContext,
 	JwtPayload,
-} from "@types/auth/auth-JWT-types";
+} from "@types-internal/auth/auth-JWT-types";
 
 import {
 	databaseNameSupabase,
@@ -648,11 +649,11 @@ import {
 import type {
 	AuthContext,
 	AuthenticatedUserDetails,
-} from "@types/auth/context-types";
+} from "@types-internal/auth/context-types";
 
 import type {
 	HandleFetchUserDataBody,
-} from "@types/dynamic-sql/fetch-user-types";
+} from "@types-internal/dynamic-sql/fetch-user-types";
 
 import {
 	databaseNameSupabase,
@@ -736,7 +737,7 @@ import type {
 	DualTimeWindows,
 	TimeWindows,
 	TimeWindow,
-} from "@types/scheduling/time-window-types";
+} from "@types-internal/scheduling/time-window-types";
 
 function intersectTimeWindows(
 	dualTimeWindows: DualTimeWindows,
@@ -803,7 +804,7 @@ function intersectTimeWindows(
 ### Types and interfaces architecture
 
 - **Declare and define** reusable **`interface`** and **`type` alias** declarations **only** under **`./src/types/**/*.ts`**, grouped by **module** and mirrored in the file name (for example **`./src/types/auth/auth-JWT-types.ts`** for auth-related JWT shapes).
-- **Import** those names with **`import type { … }`** (or mixed **`import { type … }`**) via the **`@types/…`** alias (for example **`@types/auth/auth-JWT-types`**). Register **`@types/*`** in **`compilerOptions.paths`** together with **`@config/*`** and your other roots (see **Always Use ES6 Module Syntax, Import Order, and Type Imports**).
+- **Import** those names with **`import type { … }`** (or mixed **`import { type … }`**) via the **`@types-internal/…`** alias (for example **`@types-internal/auth/auth-JWT-types`**). Register **`@types-internal/*`** in **`compilerOptions.paths`** together with **`@config/*`** and your other roots (see **Always Use ES6 Module Syntax, Import Order, and Type Imports**).
 - Cover **domain data structures**, **function parameter and return shapes**, **class-related types**, unions, literals, and any other **named compile-time shapes** shared by the team in those modules. **Do not** add parallel **`interface` / `type`** declarations in **`./src/handlers/**`**, **`./src/services/**`**, or arbitrary feature folders. **Never** keep production **`interface`/`type`** definitions outside **`./src/types/**`**.
 - **For React component types** (`./src/types/components/**`): files are generalized per feature group - do not create one type file per component; create one per group because types are reused within a component group. Use **`PascalCase`** for the directory and the file prefix, appending **`-types`** (e.g., `./src/types/components/UserProfile/UserProfile-types.ts` covers all `UserProfile` components). See **code-rules-TypeScript-React-Tailwind.md** for full React component file naming rules.
 - Prefer **`interface`** for reusable **object** shapes where it fits; use a **`type` alias** when **`interface` cannot express the shape** (for example unions of object types, discriminated unions whose members differ, tuples, mapped types, conditional types, or intersections that do not map cleanly to a single **`interface`** declaration).
@@ -849,7 +850,7 @@ Annotate arrays:
 // file: `./src/handlers/demo-weekdays-binding.ts` - imports weekday union annotated on the array binding
 import type {
 	Weekday,
-} from "@types/time/weekday-types";
+} from "@types-internal/time/weekday-types";
 
 const weekdays: Weekday[] = [
 	"sunday",
@@ -922,7 +923,7 @@ Use literal union types as parameter and field types so out-of-union values fail
 // file: ./src/routing/example-routing-request.ts
 import type {
 	RoutingProfile,
-} from "@types/routing/profile-types";
+} from "@types-internal/routing/profile-types";
 
 function buildProfileUrl(
 	profile: RoutingProfile,
@@ -966,7 +967,7 @@ Assertions appear where runtime validation already narrowed the truth, but TypeS
 // file: `./src/auth/example-jwt-followup.ts` - imports payload contract from types
 import type {
 	JwtPayload,
-} from "@types/auth/auth-JWT-types";
+} from "@types-internal/auth/auth-JWT-types";
 
 // jwksRemote is a function that jose.jwtVerify will call to get the key
 const {
@@ -1003,7 +1004,7 @@ export const DEFAULT_PG_SCHEMA: string = "public";
 // file: ./src/types/gis/example-schema-guardrails-types.ts
 import type {
 	BoundingBox,
-} from "@types/gis/bbox";
+} from "@types-internal/gis/bbox";
 
 export interface ExampleApplySchemaGuardrailsParams {
 	databaseName: string;
@@ -1023,11 +1024,11 @@ import {
 
 import type {
 	ColumnsSchema,
-} from "@types/dynamic-sql/columns-schema";
+} from "@types-internal/dynamic-sql/columns-schema";
 
 import type {
 	ExampleApplySchemaGuardrailsParams,
-} from "@types/gis/example-schema-guardrails-types";
+} from "@types-internal/gis/example-schema-guardrails-types";
 
 import {
 	validateBoundingBox,
@@ -1107,7 +1108,7 @@ import type {
 	RowsByIdMap,
 	RowsArray,
 	RowsById,
-} from "@types/dynamic-sql/rows-shapes";
+} from "@types-internal/dynamic-sql/rows-shapes";
 
 export type DbFetchDataRows =
 	RowsByIdMapSerialized
@@ -1225,11 +1226,11 @@ The modules already illustrated in this document each demonstrate a single conce
 // file: ./src/types/places/get-places-types.ts (exports request + result shapes)
 import type {
 	BoundingBox,
-} from "@types/gis/bbox";
+} from "@types-internal/gis/bbox";
 
 import type {
 	FetchColumnsParams,
-} from "@types/dynamic-sql/fetch-columns-types";
+} from "@types-internal/dynamic-sql/fetch-columns-types";
 
 export interface GetPlacesParams {
 	bbox: BoundingBox;
@@ -1242,11 +1243,11 @@ export interface GetPlacesParams {
 // file: ./src/services/places/get-places.ts (orchestrates: validate -> fetch -> return)
 import type {
 	GetPlacesParams,
-} from "@types/places/get-places-types";
+} from "@types-internal/places/get-places-types";
 
 import type {
 	RowsByIdMapSerialized,
-} from "@types/dynamic-sql/rows-shapes";
+} from "@types-internal/dynamic-sql/rows-shapes";
 
 import {
 	validateBoundingBox,
@@ -1326,12 +1327,12 @@ export interface UpsertTableParams {
 import type {
 	FetchTableParams,
 	UpsertTableParams,
-} from "@types/db/schema-table-params-types";
+} from "@types-internal/db/schema-table-params-types";
 
 import type {
 	RowsByIdMapSerialized,
 	UpsertResult,
-} from "@types/dynamic-sql/rows-shapes";
+} from "@types-internal/dynamic-sql/rows-shapes";
 
 import {
 	DEFAULT_PG_SCHEMA,
@@ -1607,7 +1608,7 @@ export const DISPLAY_INDEX_BASELINE: number = 1;
 import type {
 	VroomDayParam,
 	VroomVehicle,
-} from "@types/vroom/vroom-day-types";
+} from "@types-internal/vroom/vroom-day-types";
 
 import {
 	DISPLAY_INDEX_BASELINE,
@@ -1655,7 +1656,7 @@ Named functions yield clearer stacks and searchable symbols:
 import type {
 	FetchDataBody,
 	RowsByIdMapSerialized,
-} from "@types/sql/fetch-data-body-types";
+} from "@types-internal/sql/fetch-data-body-types";
 
 // file: `./src/handlers/sql/handle-fetch-data-request-v04.ts`
 async function handleFetchDataRequestV04(
@@ -1688,7 +1689,7 @@ Structure every **`function`** body as **three vertical bands** (**Data - Operat
 	2. **Calls into other named functions** (imported helpers or file-local helpers declared **lower** per **Files Structure**).
 3. **Return** - **multiple `return` statements are allowed** (early exits, **`switch`** branches, guards). Each **`return`** must pass **a single identifier** (a **`const`**, **`let`**, or parameter name) that already holds the outgoing value (**Return defined variables**). **Do not** **`return` a composite expression**: no direct **`return`** of calls, **`await`**, arithmetic, **`&&` / `||`** stacks, object/array literals, template literals, or ternaries (**bind** the result first, then **`return`** the binding). The same rule applies to **`throw`**: **`throw` only** an identifier bound to an **`Error`** (or rethrow a bound variable). **Always** assign **`new Error(…)`** (including with a **`cause`**) to a **`const`** first, then **`throw`** that identifier (see **Error handling with `try…catch`**).
 
-Example (**imports** **`@config`**, **`@types`**, and a named **`areAllValuesNumbers`** helper):
+Example (**imports** **`@config`**, **`@types-internal`**, and a named **`areAllValuesNumbers`** helper):
 
 ```ts
 // file: `./src/gis-validation/validate-bounding-box.ts`
@@ -1706,7 +1707,7 @@ import {
 
 import type {
 	BoundingBox,
-} from "@types/gis/bbox";
+} from "@types-internal/gis/bbox";
 
 import {
 	areAllValuesNumbers,
@@ -1778,7 +1779,7 @@ export interface ConcurrencyDbQueriesParams {
 // file: ./src/config/db/concurrency-defaults.ts (imports discriminator type annotations)
 import type {
 	OutputType,
-} from "@types/db/concurrency-batch-types";
+} from "@types-internal/db/concurrency-batch-types";
 
 export const DEFAULT_CONCURRENCY_BATCH_SIZE: number = 1;
 export const DEFAULT_CONCURRENCY_OUTPUT_TYPE: OutputType = "array";
@@ -1786,7 +1787,7 @@ export const DEFAULT_CONCURRENCY_OUTPUT_TYPE: OutputType = "array";
 // file: ./src/db/example-concurrency.ts (consumer)
 import type {
 	ConcurrencyDbQueriesParams,
-} from "@types/db/concurrency-batch-types";
+} from "@types-internal/db/concurrency-batch-types";
 
 import {
 	DEFAULT_CONCURRENCY_BATCH_SIZE,
@@ -1842,7 +1843,7 @@ export interface FetchRequestParams {
 import type {
 	FetchRequestParams,
 	RequestParams,
-} from "@types/http/fetch-request-types";
+} from "@types-internal/http/fetch-request-types";
 
 async function fetchRequest(
 	params: FetchRequestParams,
@@ -1933,7 +1934,7 @@ import type {
 	WhereClauseBuilderState,
 	WhereConditionValue,
 	WhereValuesClause,
-} from "@types/sql/where-values-clause-types";
+} from "@types-internal/sql/where-values-clause-types";
 
 /**
  * Handles special sentinel strings like "IS NULL" and scalar equality.
@@ -1997,7 +1998,7 @@ Wrap potentially failing operations in `try...catch` blocks. Follow **Function S
 // file: ./src/types/dynamic-sql/demo-db-fetch-try-flow-types.ts
 import type {
 	DbFetchDataReturnType,
-} from "@types/dynamic-sql/db-fetch-rows";
+} from "@types-internal/dynamic-sql/db-fetch-rows";
 
 export interface DemoDbFetchTryFlowParams {
 	dbAdapter: unknown;
@@ -2018,11 +2019,11 @@ export interface DemoDbFetchTryFlowParams {
 
 import type {
 	DbFetchDataRows,
-} from "@types/dynamic-sql/db-fetch-rows";
+} from "@types-internal/dynamic-sql/db-fetch-rows";
 
 import type {
 	DemoDbFetchTryFlowParams,
-} from "@types/dynamic-sql/demo-db-fetch-try-flow-types";
+} from "@types-internal/dynamic-sql/demo-db-fetch-try-flow-types";
 
 async function demoDbFetchTryFlow(
 	params: DemoDbFetchTryFlowParams,
@@ -2144,7 +2145,7 @@ export const DB_MIGRATIONS_VERSIONS: string[] = [
 // file: ./src/migrations/set-migrations-example.ts (imports tuples + literals)
 import type {
 	DbMigration,
-} from "@types/migrations/db-migrations-types";
+} from "@types-internal/migrations/db-migrations-types";
 
 import {
 	DB_MIGRATIONS_PATH_DIR,
@@ -2206,7 +2207,7 @@ import type {
 	FetchWithTimeoutParams,
 	TimeoutHandleParams,
 	TimeoutResult,
-} from "@types/network/timeout-fetch-types";
+} from "@types-internal/network/timeout-fetch-types";
 
 import {
 	DEFAULT_FETCH_TIMEOUT_MS,
@@ -2339,11 +2340,11 @@ import type {
 	ColumnInfo,
 	ConstraintInfo,
 	IndexInfo,
-} from "@types/dynamic-data-definition/catalog-rows";
+} from "@types-internal/dynamic-data-definition/catalog-rows";
 
 import type {
 	GetTableDDLParams,
-} from "@types/dynamic-data-definition/get-table-ddl-types";
+} from "@types-internal/dynamic-data-definition/get-table-ddl-types";
 
 /**
  * Orchestrates the entire metadata extraction workflow and returns a fully
@@ -2467,13 +2468,13 @@ Always put one element per physical line in multiline array literals, object lit
 Never use `var`. Use `const` by default; use `let` only when a binding must be reassigned. Use `const` for destructuring patterns where no binding will be reassigned; use `let` when any binding from the pattern needs reassignment.
 
 **Modules and imports**
-Always use ES6 `import` / `export`. Never use CommonJS (`require`, `module.exports`, `exports`). Always use `import type { … }` for compile-time-only types. Always use `@`-prefixed path aliases for internal imports (e.g. `@types/…`, `@config/…`, `@classNames/…`); never use relative ascending paths (`../`, `../../`). Register every alias in `compilerOptions.paths`. Do not manually reorder imports - run `npx eslint PATH_FILE --fix` (or `npx eslint --fix PATH1 PATH2` for multiple files). Prefer named exports; use `export default` only when a framework requires it (Next.js pages, layouts, route handlers). Handler and service modules: bottom `export { … }` block or inline exports at declaration - one style per file, no mixing. Framework entry files (`page.tsx`, `layout.tsx`, `route.ts`, etc.): inline `export const revalidate`, `export async function generateMetadata`, and `export default` are required. Never create convenience barrel `index.ts` re-export files unless a package boundary requires a stable public API surface.
+Always use ES6 `import` / `export`. Never use CommonJS (`require`, `module.exports`, `exports`). Always use `import type { … }` for compile-time-only types. Always use `@`-prefixed path aliases for internal imports (e.g. `@types-internal/…`, `@config/…`, `@classNames/…`); never use relative ascending paths (`../`, `../../`). Register every alias in `compilerOptions.paths`. Do not manually reorder imports - run `npx eslint PATH_FILE --fix` (or `npx eslint --fix PATH1 PATH2` for multiple files). Prefer named exports; use `export default` only when a framework requires it (Next.js pages, layouts, route handlers). Handler and service modules: bottom `export { … }` block or inline exports at declaration - one style per file, no mixing. Framework entry files (`page.tsx`, `layout.tsx`, `route.ts`, etc.): inline `export const revalidate`, `export async function generateMetadata`, and `export default` are required. Never create convenience barrel `index.ts` re-export files unless a package boundary requires a stable public API surface.
 
 **Post-edit validation**
 After creating or modifying any `.ts` / `.tsx` file, agents must run `npx eslint --fix CHANGED_PATHS` on every changed path (or `npx eslint PATH_FILE --fix` per file), then `npx tsc --noEmit` on the project (not file paths - that ignores `tsconfig.json`). Use `-p path/to/tsconfig.json` when required. Fix all errors and re-run until both commands exit successfully. Never leave ESLint or TypeScript errors for the user.
 
 **Types**
-Declare all reusable `interface` and `type` alias shapes exclusively under `./src/types/**/*.ts`; import them via `@types/…`. For React component types (`./src/types/components/**`), files are generalized per feature group - create one type file per feature group, not per component, using `PascalCase` directories and the `<FeatureGroup>-types.ts` naming pattern (e.g., `./src/types/components/UserProfile/UserProfile-types.ts`). Always write explicit `: string`, `: number`, or `: boolean` annotations on function parameters, locals, and `const`/`let` bindings - never rely on inference for primitives. Always annotate array bindings with an explicit element type (`T[]` or `Array<T>`). Prefer `interface` for reusable object shapes; use `type` when `interface` cannot express the shape (unions, discriminated unions, tuples, mapped types, conditional types). Never use `any`; use `unknown` for values not known statically, then narrow with type guards or schema validators immediately after ingestion. Always enable strict null checks and guard against `null` and `undefined` explicitly. Use string literal union types for bounded domains.
+Declare all reusable `interface` and `type` alias shapes exclusively under `./src/types/**/*.ts`; import them via `@types-internal/…`. For React component types (`./src/types/components/**`), files are generalized per feature group - create one type file per feature group, not per component, using `PascalCase` directories and the `<FeatureGroup>-types.ts` naming pattern (e.g., `./src/types/components/UserProfile/UserProfile-types.ts`). Always write explicit `: string`, `: number`, or `: boolean` annotations on function parameters, locals, and `const`/`let` bindings - never rely on inference for primitives. Always annotate array bindings with an explicit element type (`T[]` or `Array<T>`). Prefer `interface` for reusable object shapes; use `type` when `interface` cannot express the shape (unions, discriminated unions, tuples, mapped types, conditional types). Never use `any`; use `unknown` for values not known statically, then narrow with type guards or schema validators immediately after ingestion. Always enable strict null checks and guard against `null` and `undefined` explicitly. Use string literal union types for bounded domains.
 
 **Config files**
 Declare all static behavioral configuration literals exclusively under `./src/config/**/*.ts`; import them via `@config/…`. For React component config (`./src/config/components/**`), files are generalized per feature group - create one config file per feature group, not per component, using `PascalCase` directories and the `<FeatureGroup>-config.ts` naming pattern (e.g., `./src/config/components/UserProfile/UserProfile-config.ts`). Never scatter `export const SOME_LITERAL = …` across services, handlers, or other files outside `./src/config/**`. Config is not content (rendered strings belong in `./src/content/**`); config is not state logic (reducers and state builders belong in `./src/states/**`); config is not presentation styling (Tailwind classes belong in `./src/styles/classNames/**`).

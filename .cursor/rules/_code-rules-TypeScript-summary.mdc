@@ -61,7 +61,7 @@ MODULES & IMPORTS
 - Group imports (external packages, then internal modules), separated by blank lines.
 - Import order is enforced by ESLint `import/order`. Do not manually reorder imports - run `npx eslint PATH_FILE --fix` (or `npx eslint --fix PATH1 PATH2` for multiple files).
 - `import type { … }` for compile-time-only types; inline `type` allowed when mixing values and types from the same module.
-- Internal imports always via `@`-prefixed path aliases (`@types/…`, `@config/…`, `@classNames/…`, `@states/…`, `@content/…`); never relative ascending paths (`../`, `../../`).
+- Internal imports always via `@`-prefixed path aliases (`@types-internal/…`, `@config/…`, `@classNames/…`, `@states/…`, `@content/…`); never relative ascending paths (`../`, `../../`).
 - Register every alias in `compilerOptions.paths`; set `compilerOptions.baseUrl`. Use matching wildcard patterns for directory trees.
 - Aliases are not runtime-resolved by Node; ensure bundler `resolve.alias`, `tsconfig-paths`, a build step, or workspace package names also understand them. For Node ESM without a bundler, use `package.json` `"imports"` (`#…` keys) and mirror them in `paths`.
 - Named exports only (`export function`, `export const`, `export { … }`); never `export default` unless a framework requires it (Next.js `page.tsx` / `layout.tsx` / `route.ts`, `robots.ts`, `sitemap.ts`, Payload admin pages, PostCSS/ESLint config). No inline comment is required when the framework convention is obvious from the file path.
@@ -76,7 +76,7 @@ DESTRUCTURING
 - Array destructuring with tuple types: `const [startA, endA]: TimeWindow = windowsA[indexA];` (value bindings are comma-separated; the tuple type separates element types with commas as well).
 
 TYPES
-- All reusable `interface` and `type` alias declarations exclusively under `./src/types/**/*.ts`; import via `@types/…`. Never keep production interface/type definitions outside `./src/types/**`.
+- All reusable `interface` and `type` alias declarations exclusively under `./src/types/**/*.ts`; import via `@types-internal/…`. Never keep production interface/type definitions outside `./src/types/**`.
 - For React component types, files are generalized per feature group - do not create one type file per component; create one per feature group. Use PascalCase for the directory and the file prefix, appending -types (e.g., ./src/types/components/UserProfile/UserProfile-types.ts). See `./.cursor/rules/_code-rules-TypeScript-React-Tailwind.mdc` for full React component file naming rules.
 - Always write explicit `: string`, `: number`, or `: boolean` on function parameters, locals, and `const`/`let` bindings - never rely on primitive inference.
 - Always annotate array bindings with an explicit element type (`T[]` or `Array<T>`).
