@@ -1,7 +1,7 @@
 # ES Lint Docs
 /_docs-eslint
 
-# Prompts
+# prompts
 /_prompts
 
 # temporal
@@ -12,3 +12,6 @@
 
 # production
 /build
+
+# ES Lint Source Code
+/_source-eslint
