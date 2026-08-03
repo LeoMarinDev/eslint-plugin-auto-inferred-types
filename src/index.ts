@@ -1,30 +1,21 @@
 import {
+	PLUGIN_NAME,
+	PLUGIN_NAMESPACE,
+	PLUGIN_VERSION,
+} from "@config/plugin/plugin-identity";
+import {
+	RECOMMENDED_OPTIONS,
+	RULE_CONFIG_TYPEDEF,
+	RULE_LEVEL_ERROR,
+} from "@config/plugin/recommended-options";
+
+import {
 	typedefRule,
 } from "@rules/typedef";
 
 import type {
 	AutoInferredTypesPlugin,
 } from "@types-internal/plugin/plugin-types";
-import type {
-	TypedefRuleOptions,
-} from "@types-internal/rules/typedef-rule-options-types";
-
-const PLUGIN_NAME = "eslint-plugin-auto-inferred-types";
-const PLUGIN_VERSION = "0.1.0";
-const PLUGIN_NAMESPACE = "auto-inferred-types";
-const RULE_LEVEL_ERROR = "error";
-const RULE_CONFIG_TYPEDEF = "auto-inferred-types/typedef";
-
-const RECOMMENDED_OPTIONS: TypedefRuleOptions = {
-	arrayDestructuring: true,
-	arrowParameter: false,
-	memberVariableDeclaration: true,
-	objectDestructuring: true,
-	parameter: true,
-	propertyDeclaration: true,
-	variableDeclaration: true,
-	variableDeclarationIgnoreFunction: false,
-};
 
 const plugin: AutoInferredTypesPlugin = {
 	meta: {

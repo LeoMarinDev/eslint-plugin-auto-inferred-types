@@ -1,0 +1,32 @@
+import type {
+	TypedefRuleOptions,
+} from "@types-internal/rules/typedef-rule-options-types";
+
+/**
+ * Rule severity applied to every entry in the `recommended` config.
+ */
+export const RULE_LEVEL_ERROR = "error";
+
+/**
+ * Fully qualified rule config key for the `typedef` rule under the
+ * plugin namespace, as referenced in the `recommended` config.
+ */
+export const RULE_CONFIG_TYPEDEF = "auto-inferred-types/typedef";
+
+/**
+ * Option set applied to the `typedef` rule in the `recommended` config.
+ *
+ * Each flag toggles typedef enforcement for a specific syntactic
+ * position. The values here represent the intended behavior of the
+ * plugin's recommended preset.
+ */
+export const RECOMMENDED_OPTIONS: TypedefRuleOptions = {
+	arrayDestructuring: true,
+	arrowParameter: false,
+	memberVariableDeclaration: true,
+	objectDestructuring: true,
+	parameter: true,
+	propertyDeclaration: true,
+	variableDeclaration: true,
+	variableDeclarationIgnoreFunction: false,
+};

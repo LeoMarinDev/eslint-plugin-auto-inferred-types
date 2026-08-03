@@ -1,63 +1,22 @@
+import {
+	BACKSLASH_PATTERN,
+	EXTENSION_PATTERN,
+	LEADING_DOT_SLASH_PATTERN,
+	NM_SCOPE_OFFSET,
+	NM_SCOPED_NAME_OFFSET,
+	NODE_MODULES_SEGMENT,
+	SRC_PREFIX,
+	TRAILING_STAR_PATTERN,
+	TYPESCRIPT_LIB_SUBPATH,
+	TYPES_REACT_SUBPATH,
+} from "@config/rules/module-specifier-resolution-config";
+
 import type {
 	ResolveLocalAliasSpecifierParams,
 	ResolveModuleSpecifierParams,
 	StripPrefixParams,
 } from "@types-internal/utils/type-imports-types";
 import type ts from "typescript";
-
-/**
- * Path segment marking the boundary of a `node_modules` dependency tree.
- */
-const NODE_MODULES_SEGMENT = "node_modules";
-
-/**
- * Sub-path marking TypeScript built-in declaration files.
- */
-const TYPESCRIPT_LIB_SUBPATH = "node_modules/typescript/lib/";
-
-/**
- * Sub-path marking the DefinitelyTyped React declarations.
- */
-const TYPES_REACT_SUBPATH = "node_modules/@types/react/";
-
-/**
- * File extension pattern for stripping `.ts`, `.tsx`, and `.d.ts` suffixes
- * when converting a file path to a module specifier.
- */
-const EXTENSION_PATTERN = /\.(ts|tsx|d\.ts)$/;
-
-/**
- * Leading `./` prefix pattern, stripped from path targets before matching.
- */
-const LEADING_DOT_SLASH_PATTERN = /^\.\//;
-
-/**
- * Trailing `*` pattern, stripped from alias and target patterns before
- * length comparison.
- */
-const TRAILING_STAR_PATTERN = /\*$/;
-
-/**
- * Backslash pattern for normalizing Windows-style path separators.
- */
-const BACKSLASH_PATTERN = /\\/g;
-
-/**
- * `src/` prefix checked as a final fallback when mapping local files
- * to `@`-prefixed aliases.
- */
-const SRC_PREFIX = "src/";
-
-/**
- * Index offset from `node_modules` to the scope-or-package segment.
- */
-const NM_SCOPE_OFFSET = 1;
-
-/**
- * Index offset from `node_modules` to the package-name segment under a
- * scoped package (e.g. `@scope/name`).
- */
-const NM_SCOPED_NAME_OFFSET = 2;
 
 /**
  * Resolve a declaration file path to a module specifier suitable for an

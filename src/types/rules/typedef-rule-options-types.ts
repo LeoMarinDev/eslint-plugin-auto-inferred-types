@@ -29,13 +29,23 @@ export type TypedefMessageIds =
 	| "expectedTypedefNamed";
 
 /**
- * Parameter object for the module-scope `reportMissingAnnotation` helper.
+ * Bundles the ESLint rule context together with the resolved rule options
+ * so visitors and helpers can receive a single typed object instead of
+ * reaching into module-scope mutable state.
+ */
+export interface TypedefRuleContext {
+	context: Readonly<TSESLint.RuleContext<TypedefMessageIds, [TypedefRuleOptions]>>;
+	options: TypedefRuleOptions;
+}
+
+/**
+ * Parameter object for the `reportMissingAnnotation` helper.
  *
- * Carries everything the helper needs from the `create` closure so it can
- * live at module scope rather than nested inside `create`.
+ * Carries the `TypedefRuleContext` plus the location and inference nodes
+ * the helper needs to report and autofix a missing type annotation.
  */
 export interface ReportMissingAnnotationParams {
-	context: Readonly<TSESLint.RuleContext<TypedefMessageIds, [TypedefRuleOptions]>>;
+	ruleContext: TypedefRuleContext;
 	location: TSESTree.Node;
 	annotationTarget: TSESTree.Node;
 	inferenceNode: TSESTree.Node | undefined;
@@ -43,9 +53,41 @@ export interface ReportMissingAnnotationParams {
 }
 
 /**
- * Parameter object for the module-scope `checkParameters` helper.
+ * Parameter object for the `checkParameters` helper.
  */
 export interface CheckParametersParams {
-	context: Readonly<TSESLint.RuleContext<TypedefMessageIds, [TypedefRuleOptions]>>;
+	ruleContext: TypedefRuleContext;
 	params: TSESTree.Parameter[];
+}
+
+/**
+ * Parameter object for the `shouldSkipVariableDeclarator` predicate.
+ */
+export interface ShouldSkipVariableDeclaratorParams {
+	node: TSESTree.VariableDeclarator;
+	variableDeclaration: boolean;
+	arrayDestructuring: boolean;
+	objectDestructuring: boolean;
+	variableDeclarationIgnoreFunction: boolean;
+}
+
+/**
+ * Parameter object for the `shouldSkipPropertyDefinition` predicate.
+ */
+export interface ShouldSkipPropertyDefinitionParams {
+	node: TSESTree.PropertyDefinition;
+	variableDeclarationIgnoreFunction: boolean;
+}
+
+/**
+ * Generic parameter object shared by every `visit*` function in
+ * `./src/rules/typedef/visitors.ts`. Bundles the AST node to inspect with
+ * the `TypedefRuleContext` so visitors can close over the rule context
+ * without reaching into module-scope mutable state.
+ *
+ * @typeParam T - The concrete `TSESTree` node type the visitor handles.
+ */
+export interface VisitParams<T extends TSESTree.Node> {
+	node: T;
+	ruleContext: TypedefRuleContext;
 }
