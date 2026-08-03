@@ -85,6 +85,18 @@ const VALID_CASES = [
 		options: [RECOMMENDED_OPTIONS],
 		filename: "tests/fixtures/test-primitive.ts",
 	},
+	{
+		name: "fixture test-autoimport.ts is fully annotated (imports already present)",
+		code: readFileSync("tests/fixtures/test-autoimport.ts", "utf8"),
+		options: [RECOMMENDED_OPTIONS],
+		filename: "tests/fixtures/test-autoimport.ts",
+	},
+	{
+		name: "fixture test-coalesce.ts is fully annotated (imports already present)",
+		code: readFileSync("tests/fixtures/test-coalesce.ts", "utf8"),
+		options: [RECOMMENDED_OPTIONS],
+		filename: "tests/fixtures/test-coalesce.ts",
+	},
 ];
 
 const INVALID_CASES = [
@@ -152,6 +164,156 @@ ruleTester.run("typedef", typedefRule, {
 		output: c.output,
 		options: c.options,
 		filename: FIXTURE_PATH,
+		errors: c.errors,
+	})),
+});
+
+/**
+ * Auto-import test cases that exercise the full import-resolution pipeline.
+ * These use fixture files (under tests/fixtures/) as their `filename` and
+ * `code` so the TypeScript parser can resolve cross-file type symbols and
+ * path aliases via the fixture tsconfig.
+ */
+const AUTO_IMPORT_INVALID_CASES = [
+	{
+		name: "auto-import: infers PaginatedDocs<Article> and inserts import type for both aliases",
+		code: readFileSync("tests/fixtures/test-autoimport-untyped.ts", "utf8"),
+		output: [
+			"import { getArticles } from \"./services/the-lab-fetch\";",
+			"import type { PaginatedDocs } from \"@test-types/payload\";",
+			"import type { Article } from \"@/payload-types\";",
+			"",
+			"export function processArticles() {",
+			"\tconst result: PaginatedDocs<Article> = getArticles();",
+			"\treturn result;",
+			"}",
+			"",
+		].join("\n"),
+		options: [{ variableDeclaration: true }],
+		filename: "tests/fixtures/test-autoimport-untyped.ts",
+		errors: [namedError("result")],
+	},
+	{
+		name: "import coalescing: existing import type for PaginatedDocs stays, only Article is added",
+		code: readFileSync("tests/fixtures/test-coalesce-untyped.ts", "utf8"),
+		output: [
+			"import type { PaginatedDocs } from \"@test-types/payload\";",
+			"",
+			"import { getArticles } from \"./services/the-lab-fetch\";",
+			"import type { Article } from \"@/payload-types\";",
+			"",
+			"export function processArticlesCoalesce() {",
+			"\tconst result: PaginatedDocs<Article> = getArticles();",
+			"\treturn result;",
+			"}",
+			"",
+		].join("\n"),
+		options: [{ variableDeclaration: true }],
+		filename: "tests/fixtures/test-coalesce-untyped.ts",
+		errors: [namedError("result")],
+	},
+	{
+		name: "import dedup: both types already imported, only annotations are added",
+		code: readFileSync("tests/fixtures/test-dedup-untyped.ts", "utf8"),
+		output: [
+			"import type { PaginatedDocs } from \"@test-types/payload\";",
+			"import type { Article } from \"@/payload-types\";",
+			"",
+			"import { getArticles, getFirstArticle } from \"./services/the-lab-fetch\";",
+			"",
+			"export function processArticlesDedup() {",
+			"\tconst result: PaginatedDocs<Article> = getArticles();",
+			"\tconst first: Article | undefined = getFirstArticle(result);",
+			"\treturn { result, first };",
+			"}",
+			"",
+		].join("\n"),
+		options: [{ variableDeclaration: true }],
+		filename: "tests/fixtures/test-dedup-untyped.ts",
+		errors: [namedError("result"), namedError("first")],
+	},
+	{
+		name: "self-import skip: type declared in same file is not imported",
+		code: readFileSync("tests/fixtures/test-self-import.ts", "utf8"),
+		output: [
+			"export interface LocalType {",
+			"\tid: number;",
+			"\tvalue: string;",
+			"}",
+			"",
+			"export function makeLocal() {",
+			"\tconst item: LocalType = {",
+			"\t\tid: 1,",
+			"\t\tvalue: \"hello\",",
+			"\t};",
+			"\treturn item;",
+			"}",
+			"",
+			"export function processLocal() {",
+			"\tconst item: LocalType = makeLocal();",
+			"\treturn item;",
+			"}",
+			"",
+		].join("\n"),
+		options: [{ variableDeclaration: true }],
+		filename: "tests/fixtures/test-self-import.ts",
+		errors: [namedError("item")],
+	},
+	{
+		name: "express node_modules import: infers Express type and inserts import type from @types/express-serve-static-core",
+		code: readFileSync("tests/fixtures/test-express.ts", "utf8"),
+		output: [
+			"import express from \"express\";",
+			"import type { Express } from \"@types/express-serve-static-core\";",
+			"",
+			"export function makeApp() {",
+			"\tconst app: Express = express();",
+			"\treturn app;",
+			"}",
+			"",
+		].join("\n"),
+		options: [{ variableDeclaration: true }],
+		filename: "tests/fixtures/test-express.ts",
+		errors: [namedError("app")],
+	},
+	{
+		name: "react global type qualification: useState infers React.Dispatch<React.SetStateAction<number>> without importing @types/react",
+		code: readFileSync("tests/fixtures/test-react.tsx", "utf8"),
+		output: [
+			"import { useState } from \"react\";",
+			"",
+			"export function useCounter() {",
+			"\tconst [count, setCount]: [number, React.Dispatch<React.SetStateAction<number>>] = useState(0);",
+			"\treturn { count, setCount };",
+			"}",
+			"",
+		].join("\n"),
+		options: [{ variableDeclaration: true, arrayDestructuring: true }],
+		filename: "tests/fixtures/test-react.tsx",
+		errors: [
+			{ messageId: "expectedTypedef" },
+			{ messageId: "expectedTypedef" },
+		],
+	},
+];
+
+const autoImportRuleTester = new RuleTester({
+	languageOptions: {
+		parser,
+		parserOptions: {
+			project: FIXTURE_TSCONFIG,
+		},
+	},
+});
+
+autoImportRuleTester.run("typedef-auto-import", typedefRule, {
+	valid: [],
+	invalid: AUTO_IMPORT_INVALID_CASES.map((c) => ({
+		name: c.name,
+		code: c.code,
+		output: c.output,
+		options: c.options,
+		filename: c.filename,
 		errors: c.errors,
 	})),
 });

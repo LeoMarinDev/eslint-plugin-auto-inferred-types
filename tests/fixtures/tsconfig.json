@@ -8,6 +8,7 @@
 		"isolatedModules": true,
 		"noEmit": true,
 		"jsx": "react-jsx",
+		"lib": ["ES2022", "DOM"],
 		"paths": {
 			"@/*": ["./*"],
 			"@test-types/*": ["./types/*"],

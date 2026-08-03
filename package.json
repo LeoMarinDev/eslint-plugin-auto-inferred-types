@@ -38,7 +38,9 @@
     "devDependencies": {
         "@eslint/eslintrc": "^3.3.0",
         "@eslint/js": "^10.0.0",
+        "@types/express": "^5.0.6",
         "@types/node": "^26.1.2",
+        "@types/react": "^19.2.18",
         "@typescript-eslint/parser": "^8.66.0",
         "eslint": "^10.8.0",
         "eslint-import-resolver-typescript": "^4.4.5",
