@@ -588,7 +588,12 @@ const config = [
 			"import/no-mutable-exports": "error",
 
 			// ./.cursor/rules/_code-rules-TypeScript.mdc: "Never relative ascending paths (../)"
-			"import/no-relative-parent-imports": "error",
+			// Disabled: this rule resolves @-prefixed aliases to their real file paths and then
+			// flags cross-directory alias imports as "parent" imports (false positive).
+			// The no-restricted-imports rule above already enforces the no-../ constraint by
+			// checking the import specifier string directly, which is the correct behavior for
+			// alias-based projects.
+			"import/no-relative-parent-imports": "off",
 
 			// ./.cursor/rules/_code-rules-TypeScript.mdc: "Group imports separated by blank lines;
 			// alphabetical within groups."
