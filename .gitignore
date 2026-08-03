@@ -1,0 +1,17 @@
+# ES Lint Docs
+/_docs-eslint
+
+# ES Lint Plugin Auto Inferred Types in JavaScript
+_eslint-plugin-auto-inferred-types-js
+
+# Prompts
+/_prompts
+
+# temporal
+/_tmp
+
+# dependencies
+/node_modules
+
+# production
+/build

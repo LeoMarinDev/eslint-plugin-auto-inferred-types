@@ -1,0 +1,175 @@
+---
+description: Apply when creating or editing TypeScript (`.ts`) files or shared TypeScript modules. Enforces typed, modular, readable code with strict formatting, naming, imports, configuration, validation, error handling, async patterns, and separation of concerns. This is a concise summary of `./.cursor/rules/_code-rules-TypeScript.mdc` - read that file in full for edge cases, rationale, and canonical examples.
+tags: [typescript, nodejs, bunjs, coding-standards, architecture, formatting, naming-conventions, module-design, async-patterns, documentation]
+priority: high
+alwaysApply: true
+---
+
+This file is an always-applied concise summary of `./.cursor/rules/_code-rules-TypeScript.mdc`.
+Every rule below is binding; when a point is ambiguous or an edge case arises,
+read the original `./.cursor/rules/_code-rules-TypeScript.mdc` for the full
+rationale, canonical code examples, and boundary clarifications.
+
+PRINCIPLES
+- DRY - one authoritative location for every piece of knowledge.
+- SoC - each module and function owns exactly one concern.
+- Modularity - small, named, independently testable units connected by stable typed interfaces.
+- Readability - names and structure carry meaning; comments fill only gaps code cannot convey.
+- Iterability - changes to one concern must not cascade into unrelated code.
+
+FORMATTING
+- Indent with 1 tab (\t) per level; never spaces.
+- Double quotes ("…") for all string literals; template literals only for interpolation or multiline strings; never single quotes.
+- Terminate every statement with a semicolon (;).
+- Use only a plain hyphen-minus (-); never an en dash or em dash.
+- Maximum 100 physical lines per named function/method (blank lines count; JSDoc above does not). Split responsibilities into smaller named functions when the limit would be exceeded.
+
+TRAILING COMMAS & SEPARATORS
+- Multiline array literals, object literals, and call-site argument lists: trailing comma after the last item.
+- Formal parameter lists (non-empty): always a trailing comma after the last parameter, even on a single physical line (e.g. `function foo(bar: Baz,)`).
+- Empty parameter lists: no comma inside `()`.
+- Use commas to separate runtime lists (parameters, arguments, destructuring bindings, array/object elements, tuple element types). Generic lists `<T, U>` and `import type { Foo, Bar }` keep commas wherever TS/ECMAScript syntax requires them.
+- Use semicolons to separate members inside `interface` bodies and inline object-type shapes. Do not use `;` between tuple element types.
+
+NAMING CONVENTIONS
+- `camelCase`: variables, functions, parameters (leading _ allowed for unused; no trailing _).
+- `UPPER_CASE`: every hardcoded configuration literal assigned to a `const` (timeouts, limits, HTTP methods, status codes, path segments, feature flags, multipliers). Shared styling classes also use UPPER_CASE. Runtime-varying data (request fields, parsed JSON, loop indices, intermediates) stays camelCase unless it is a true compile-time-style constant.
+- `PascalCase`: classes, interfaces, type aliases.
+- No `I` prefix on interfaces (UserAccount, not IUserAccount).
+- `snake_case` bindings only when mirroring an external schema (REST/JSON, DB rows, vendor SDKs). Keep snake_case local and aligned with upstream field names only where renaming would obscure protocol or storage reality.
+
+NO MAGIC NUMBERS
+- Never use a bare numeric literal directly in an expression. Assign it to a named `UPPER_CASE const` first, then reference the binding.
+- Exception: obvious pure-bookkeeping indices such as `index + 1`.
+- Domain-specific bare numbers (timeouts, HTTP codes, limits, geodetic bounds) must always be named first.
+
+MULTILINE FORMATTING
+- Arrays / objects: one element or property per physical line.
+- Compound boolean predicates (&&, ||): one operand/sub-condition per physical line everywhere they appear - if, while, do…while, for-condition, ternary condition, const/let boolean bindings, return, throw.
+- for-loop headers: one clause per physical line (initializer / condition / update).
+- Non-empty function signatures: `async` (if any), `function`, and name on one line followed by `(`; one parameter per physical line (each ends with a trailing comma); close with `): ReturnType {` on its own line. Empty parameter lists stay compact: `function f()`.
+- Inline object type annotations ({ … }): expand across multiple lines - `{` alone, each `member: Type;` on its own line, `}` alone before `=`, `)`, `:`, `as`, or the following token. Prefer a `type`/`interface` under `./src/types/**` when the shape repeats.
+
+VARIABLES
+- Never `var`.
+- `const` by default; `let` only when a binding must be reassigned.
+- Destructuring: `const` when no binding in the pattern is reassigned; `let` when any binding needs reassignment. You cannot mark one binding `const` and another `let` in the same pattern - split into multiple declarations when only some fields must stay mutable.
+- `let`/`const` are block-scoped with a temporal dead zone; prefer them over `var` to avoid accidental reads before initialization and leakage across branches.
+
+MODULES & IMPORTS
+- ES6 `import` / `export` exclusively; no CommonJS (`require`, `module.exports`, `exports`).
+- Group imports (external packages, then internal modules), separated by blank lines.
+- Import order is enforced by ESLint `import/order`. Do not manually reorder imports - run `npx eslint PATH_FILE --fix` (or `npx eslint --fix PATH1 PATH2` for multiple files).
+- `import type { … }` for compile-time-only types; inline `type` allowed when mixing values and types from the same module.
+- Internal imports always via `@`-prefixed path aliases (`@types/…`, `@config/…`, `@classNames/…`, `@states/…`, `@content/…`); never relative ascending paths (`../`, `../../`).
+- Register every alias in `compilerOptions.paths`; set `compilerOptions.baseUrl`. Use matching wildcard patterns for directory trees.
+- Aliases are not runtime-resolved by Node; ensure bundler `resolve.alias`, `tsconfig-paths`, a build step, or workspace package names also understand them. For Node ESM without a bundler, use `package.json` `"imports"` (`#…` keys) and mirror them in `paths`.
+- Named exports only (`export function`, `export const`, `export { … }`); never `export default` unless a framework requires it (Next.js `page.tsx` / `layout.tsx` / `route.ts`, `robots.ts`, `sitemap.ts`, Payload admin pages, PostCSS/ESLint config). No inline comment is required when the framework convention is obvious from the file path.
+- Handler and service modules: all module-level exports grouped at the bottom in one `export { … }` block, or all exported inline at declaration - never mix both styles in the same file.
+- Framework entry files must use inline exports at declaration (e.g. `export const revalidate`, `export async function generateMetadata`, `export default`).
+- No convenience barrel `index.ts` re-export files unless a package boundary requires a stable public API surface.
+
+DESTRUCTURING
+- Use object and array destructuring to improve clarity.
+- Annotate the destructuring pattern with the named type: `const { a, b }: MyDto = dto;`.
+- Object destructuring with renaming: `const { jwtOriginalPayload: jwtPayload, id: userId }: AuthenticatedUserDetails = auth;`.
+- Array destructuring with tuple types: `const [startA, endA]: TimeWindow = windowsA[indexA];` (value bindings are comma-separated; the tuple type separates element types with commas as well).
+
+TYPES
+- All reusable `interface` and `type` alias declarations exclusively under `./src/types/**/*.ts`; import via `@types/…`. Never keep production interface/type definitions outside `./src/types/**`.
+- For React component types, files are generalized per feature group - do not create one type file per component; create one per feature group. Use PascalCase for the directory and the file prefix, appending -types (e.g., ./src/types/components/UserProfile/UserProfile-types.ts). See `./.cursor/rules/_code-rules-TypeScript-React-Tailwind.mdc` for full React component file naming rules.
+- Always write explicit `: string`, `: number`, or `: boolean` on function parameters, locals, and `const`/`let` bindings - never rely on primitive inference.
+- Always annotate array bindings with an explicit element type (`T[]` or `Array<T>`).
+- `interface` for reusable object shapes; `type` when `interface` cannot express the shape (unions, discriminated unions, tuples, mapped types, conditional types).
+- Never `any`. Use `unknown` for values not statically known; narrow immediately with type guards or schema validators (e.g. Zod). Avoid gratuitous `unknown` once shape is validated.
+- Always enable strict null checks; always guard `null` and `undefined` explicitly.
+- String literal union types for all bounded domains (enables compile-time rejection of out-of-domain values and editor autocompletion).
+- One-off inline object types are acceptable only for single-use, non-exported local annotations (multiline per the inline object type rule above). Introduce a `type`/`interface` under `./src/types/**` as soon as a shape repeats, leaves the module, or names a stable domain concept.
+- Type assertions (`as`) appear only where runtime validation already narrowed the truth but TypeScript cannot prove it.
+
+CONFIG FILES
+- All static behavioral configuration literals (limits, timeouts, protocol constants, path segments, feature flags, multipliers) exclusively under `./src/config/**/*.ts`; import via `@config/…`.
+- For React component config, files are generalized per feature group. Use PascalCase for the directory and the file prefix, appending -config (e.g., ./src/config/components/UserProfile/UserProfile-config.ts).
+- Never scatter `export const SOME_LITERAL = …` in services, handlers, or any file outside `./src/config/**`.
+- Config is NOT for user-facing content; use `./src/content/**` for rendered strings.
+- Config is NOT for pure state logic; use `./src/states/**` for reducers and state builders.
+- Config is NOT for presentation styling; use `./src/styles/classNames/**` for Tailwind class names.
+
+USER-FACING CONTENT
+- All static values that render as user-visible output (labels, headings, button text, descriptions, empty-state messages, nav text, pricing copy, FAQ entries, display metrics) exclusively under `./src/content/**/*.ts`; import via `@content/…`.
+- For React component content, files are generalized per feature group. Use PascalCase for the directory and the file prefix, appending -content (e.g., ./src/content/Counter/Counter-content.ts).
+- Never inline user-facing strings in source files outside `./src/content/**` or in config files.
+- Each content module declares a typed `interface` alongside its exported constant.
+
+PURE STATE LOGIC
+- All pure state transition functions (reducers, state factories, action builders, initial state builders, state normalization helpers, derived selectors, reset helpers) exclusively under `./src/states/**/*.ts`; import via `@states/…`.
+- For React component state, files are generalized per feature group. Use PascalCase for the directory and the file prefix, appending -state (e.g., ./src/states/Counter/Counter-state.ts).
+- Never place JSX, React Hooks, or Context creation in `./src/states/**`.
+
+MODULE DESIGN (ONE CONCERN PER FILE)
+- Fetch/transport → `./src/http/**`, `./src/services/**` - issues I/O, returns raw/typed response; no domain validation or output transformation.
+- Validate → `./src/validation/**`, `./src/gis-validation/**` - returns boolean or throws a named Error; no I/O or data transformation.
+- Transform/map → `./src/transform/**`, `./src/formatting/**` - pure shape conversion; no I/O, no validation.
+- Orchestrate → `./src/handlers/**`, `./src/services/**` - sequences fetch, validate, transform at named boundaries; owns the workflow, not the individual operations.
+- Configure → `./src/config/**` - behavioral fixed literals only.
+- Define types → `./src/types/**` - compile-time shapes only.
+- Pure state transition logic → `./src/states/**` - reducers, factories, builders; no JSX, no Hooks, no Context.
+- User-facing static content → `./src/content/**` - labels, headings, button text.
+- UI view components → `./src/components/**` - each `.tsx` file declares exactly one React component.
+- Reusable styling / Tailwind class strings → `./src/styles/classNames/**` - exported as UPPER_CASE constants, imported via `@classNames/…`. Files named in PascalCase matching the component or feature group, appending `-classNames` (e.g., `Button-classNames.ts`). Single-use `className` strings may remain inline in JSX; repeated strings must be extracted here before their second use.
+- Name each file after its single concern. Never mix concern types in one file.
+- Never write HTTP I/O inside a validator or transformer.
+- Never embed domain validation inside a fetch function.
+- When the same logical step appears in two or more places, extract it once as a named function before writing it a second time - never paste duplicate blocks. The same discipline applies to type shapes: once an inline object type repeats or leaves the module, name it under `./src/types/**`.
+- One component per .tsx file: each file declares exactly one React component. A List component (ComponentNameList.tsx) only orchestrates iteration and collection layout; it imports and renders a pre-defined Item component (ComponentName.tsx) - never inlines the Item structure. Both files reside in the same PascalCase feature directory (e.g., ./src/components/ComponentName/).
+
+FILES STRUCTURE
+- Every `*.ts` module starts with all `import`/`export type` declarations grouped per the imports rules; imports precede any `function`, `class`, or `const` implementation.
+- Top-to-bottom abstraction: after imports, place orchestrators/handlers first, then narrow helpers and single-purpose utilities toward the bottom. The primary story should read from the top down.
+- File-local callees: when function A in this module calls function B in the same file, define B below A so dependency direction matches reading order. Do not rely on function hoisting to call something declared above the callsite. For mutual recursion or upward references, split logic into another module and import it.
+- Imported symbols may be referenced from anywhere in the module; ordering rules apply to `function` declarations lexically scoped in this translation unit.
+
+CONDITIONAL STATEMENTS
+- Always `===` and `!==`; never `==` or `!=`.
+- `switch`: always `{ }` braces per case body; always a `default` branch that throws a named `Error`; never fall-through. Each `case` block ends with `return`, `throw`, or `break`.
+- Ternary: only when both branches are single tokens, the result is assigned to a named binding, and the expression is not nested inside another ternary. Never use a ternary as a statement.
+- Early-return guard clauses at the top of function bodies (Data layer) to reject invalid inputs before business logic runs. Each early `return` and `throw` follows the Return/throw rules below.
+
+LOOPS
+- Counted iteration: `for` with explicit initializer, condition, and update.
+- `while` is permitted when loop control reads more clearly. `while`/`do…while` conditions follow the multiline predicate rule like `if`.
+- Never `for…of`, `for…in` as an array walker, or `.map` / `.forEach` / `.filter` for iteration over a collection.
+
+FUNCTIONS
+- Always named `function` or `async function` declarations at module scope. Do not bind module routines as `const fn = () => …` when a `function` declaration would work.
+- Never declare a `function` or `async function` nested inside another function body - move the callee to module scope (declared below its first caller) or import it. `class` methods remain valid.
+- Callbacks passed to APIs (Promise, addEventListener, setTimeout, array.map, etc.) may be arrow or anonymous function expressions; they must not replace a `function` that should live at module scope.
+- Function body structure - three vertical bands:
+1. Data layer: destructure params, guard clauses, input normalization, cheap validation, const seeds.
+2. Operation layer: business logic, branching, delegated calls.
+3. Return.
+- Always pass multiple related inputs as a single object annotated with an `interface` or `type` alias declared under `./src/types/**`.
+- Every `return` passes exactly one identifier that already holds the outgoing value - never `return` a composite expression, a call, `await`, arithmetic, `&&`/`||` stacks, object/array literals, template literals, or ternaries directly. Bind the result first, then `return` the binding.
+- Every `throw` throws only a `const`-bound `Error` identifier - never `throw new Error(…)` inline. In `catch`, wrap with `cause`: assign `new Error(…, { cause })` to a `const`, then `throw` that identifier.
+- File order: imports → orchestrators/handlers → narrow helpers/utilities. Define each file-local callee below its first caller so dependency direction matches reading order.
+
+ASYNCHRONOUS PROGRAMMING
+- Always `async`/`await`; never `.then()` or raw callback functions.
+- Wrap potentially failing operations in `try…catch`.
+- In `catch`, assign `new Error(…, { cause })` to a `const`, then `throw` that identifier.
+- Parallel async: collect promises in a `for` loop without `await`, then `await Promise.all(promises)`.
+- Sequential async: `await` inside the `for` loop body.
+- Prefer not mutating objects received from `params`; shallow-copy first when mutation is needed on a copy. Reserve in-place mutation for APIs that deliberately pass mutable accumulator buckets (documented out-parameters).
+
+POST-EDIT VALIDATION
+- After creating or modifying any `.ts`, `.tsx`, `.mts`, or `.cts` file, agents must validate before considering the task complete. Never hand off work with ESLint or TypeScript errors.
+- Collect `CHANGED_PATHS` (every created/modified file, space-separated, relative to repo root).
+- Run ESLint with auto-fix scoped to changed paths only: `npx eslint --fix CHANGED_PATHS` (or `npx eslint PATH_FILE --fix` per file). Do not manually fix import order or other ESLint-fixable violations.
+- Run TypeScript typecheck on the project, not on individual file paths (passing paths ignores `tsconfig.json`): `npx tsc --noEmit`. Use `-p path/to/tsconfig.json` when the project requires it.
+- If either command reports errors, fix the code and repeat until both exit successfully.
+
+DOCUMENTATION
+- JSDoc (`/** … */`) above every exported function and above any module-private function whose behavior, preconditions, side effects, or `throw` contract are non-obvious from the name and types alone. Omit JSDoc for trivial private helpers where the name and types fully communicate the contract.
+- Use `@param {Type} params.field`, `@returns`, and `@throws` tags. For object-parameter functions, document each field as `@param {Type} params.field - description`. `@async` is redundant on `async function`; omit it unless the toolchain requires it.
+- Inline `//` comments only for non-obvious intent, trade-offs, or constraints the code itself cannot convey.
+- Never commit `/* */` block comments (use them only to temporarily disable code during debugging).

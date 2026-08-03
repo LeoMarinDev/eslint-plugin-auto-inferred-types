@@ -1,0 +1,2503 @@
+---
+description: Apply when creating or editing TypeScript (`.ts`) files or shared TypeScript modules. Enforces typed, modular, readable code with strict formatting, naming, imports, configuration, validation, error handling, async patterns, and separation of concerns.
+tags: [typescript, nodejs, bunjs, coding-standards, architecture, formatting, naming-conventions, module-design, async-patterns, documentation]
+priority: high
+alwaysApply: true
+---
+# **NodeJS / BunJS + TypeScript Code Rules**
+
+---
+
+## Principles
+
+These rules enforce five core architectural principles. Every section in this document serves at least one of them.
+
+| Principle | What it means |
+|-----------|---------------|
+| **DRY** (Do Not Repeat Yourself) | Each piece of knowledge - a constant, a type shape, a guard, a computation - has exactly one authoritative location. Duplication forces parallel edits and risks silent divergence. |
+| **SoC** (Separation of Concerns) | Each module and function owns exactly one concern. Mixing I-O, validation, and transformation in one place makes any of the three harder to change independently. |
+| **Modularity** | Units are small, named, independently testable, and connected by stable typed interfaces. Adding or replacing a module must not require editing unrelated code. |
+| **Readability** | Code communicates intent to the next reader without guesswork. Names, structure, and formatting carry the meaning; comments fill only the gaps that code cannot convey. |
+| **Iterability** | A change to one concern does not cascade unpredictably into unrelated code. This is the natural result of applying DRY, SoC, and Modularity together. |
+
+---
+
+## Code Readability
+
+### Consistent Conventions
+
+- **Indentation**: Use **1 tab (\t)** per indent level. Nested blocks increase indent by one level (1 tab (\t)).
+
+- **String literals**: Use **double quotes** (`"..."`) for normal string literals. Use **template literals** (`` `${expression}` `` or multi-line `` `...` ``) only when you need interpolation or a multi-line string body. Do not use single-quoted (`'...'`) string literals.
+
+- **Hyphens / dashes**: Always use **only** a plain **hyphen-minus** (`-`) wherever you need a dash. **Never** use an **en dash** (`-`) or **em dash** (`-`).
+
+- **Semicolons**: Terminate statements with **semicolons** (`;`). Apply semicolons consistently in TypeScript source (imports, exports, declarations, assignments, return statements, and similar statement forms).
+
+- **Trailing commas**: When an **array literal**, **object literal**, **call-site argument list**, or similar comma-separated list is formatted with **one element per line** (multiline), include a **trailing comma** after the last item. Omit trailing commas only for intentionally **single-line** literals or lists written on **one physical line**.
+
+- **Formal parameter lists** (any arity, including **exactly one parameter**): always write a **trailing comma** after the **last** parameter-even on **one physical line** (`function foo(bar: Baz,)`) and when the **`(` … `)`** span **multiple lines**. An **empty** parameter list stays **`function f()`** with **no** comma inside `()`. This keeps diffs tidy when signatures grow. **Formal parameters are stricter than the bullet above**: unlike **single-line** array/object literals and call-site **arguments**, where you may omit a trailing comma, **formal parameter lists always** keep one whenever the list is non-empty, **even if** the declaration fits on **one physical line**.
+
+- **Separators**: use **comma** (`,`) to separate **identifiers and values that form a runtime list**: function **parameters**, **arguments**, binding names in **`import` / `export`**, comma-separated **destructuring** identifiers (for example **`const { a, b }`** or **`const [a, b]`**), and elements in array / object **literals**. Use **semicolon** (`;`) to separate **members** inside **`interface`** bodies, inline **object types**, and brace-delimited **type shapes** (when multiline under **Inline object types (annotations)** in **Multiline Formatting**, typically **`timeout: number;`** and **`url: string;`** each get their **own physical line** between **`{`** and **`}`**). When you write a **tuple type** next to **tuple destructuring** (for example **`const [columns, constraints]: [ColumnInfo[], ConstraintInfo[]]`**), the **value bindings** are comma-separated, and the **tuple type** separates **each element type** with a **comma** as well. Follow **Trailing commas** above when the **`[ … ]`** type spans **multiple lines**. Do **not** use **`;`** between tuple element types; **`;`** is for **`interface`** / object-type **members** only. (**Generic** lists **`<T, U>`**, **`import type { Foo, Bar }`**, and similar constructs keep **commas** wherever TypeScript / ECMAScript syntax requires them.)
+
+- **Function length**: Keep each **named function or method** at **most 100 lines**. Count **physical lines** from the first line of the function declaration (including a multiline signature and opening `{`) through the line with the closing `}` that ends the function body. **Blank lines count**. A **documentation comment block immediately above** the function does **not** count toward the 100-line limit. If a function would exceed the limit, **split responsibilities** into smaller named functions (validation, mapping, I-O, orchestration) instead of growing one routine.
+
+### Consistent Naming Conventions
+
+- **Variables**: `camelCase`, `UPPER_CASE`, or `PascalCase`; leading underscore allowed for intentionally unused bindings; trailing underscore forbidden.
+- **Hardcoded values (especially configuration)**: Use **`UPPER_CASE`** for **`const` bindings** (and **`let`** only if such a value is reassigned) whose value is a **fixed literal** or a **small composition of literals** you control-timeouts, limits, HTTP methods as string constants, feature flags, default ports, path segments, and similar. This is in addition to the **Named Constants - No Magic Numbers** rule: **name the literal first**, then **name the binding in `UPPER_CASE`**. Data that **varies at runtime** (request fields, parsed JSON, loop indices, intermediates) stays **`camelCase`** unless it is truly a compile-time-style constant.
+- **Functions**: `camelCase`.
+- **Parameters**: `camelCase`; leading underscore allowed for unused parameters.
+- **Classes / type-like**: `PascalCase`.
+- **Interfaces**: `PascalCase` **without** an `I` prefix (`UserAccount`, not `IUserAccount`).
+- **Wire-format / JSON**: **`snake_case` bindings are allowed** when they **mirror an external schema** (REST/JSON payloads, RPC, database rows, vendor SDKs). Prefer **`camelCase`** for identifiers you own end-to-end; keep **`snake_case`** local names aligned with upstream field names **only where** renaming would obscure protocol or storage reality.
+
+**camelCase** async functions, object parameters, and **camelCase** locals (runtime data); **`UPPER_CASE`** for fixed configuration / protocol literals:
+```ts
+// file: ./src/types/valhalla/valhalla-matrix-types.ts (exports matrix + HTTP request shapes)
+export interface ValhallaMatrixRequestParams {
+	sources: unknown;
+	targets: unknown;
+	costing: unknown;
+	costing_options: unknown;
+	algorithm: unknown;
+	units: unknown;
+	verbose: unknown;
+	shape_format: unknown;
+}
+
+export interface ValhallaMatrixResponse {
+	// ...
+}
+
+export interface ValhallaConfig {
+	host: string;
+	port: string;
+}
+
+export interface RequestParams {
+	method: string;
+	queryParams: Record<string, string>;
+}
+
+// file: ./src/config/valhalla/valhalla-routing.ts (exports literals)
+export const HTTP_METHOD_GET: string = "GET";
+export const VALHALLA_MATRIX_PATH: string = "/sources_to_targets";
+
+// file: ./src/services/valhalla/get-matrix.ts (imports types + configuration)
+import type {
+	ValhallaConfig,
+	ValhallaMatrixRequestParams,
+	ValhallaMatrixResponse,
+	RequestParams,
+} from "@types/valhalla/valhalla-matrix-types";
+
+import {
+	HTTP_METHOD_GET,
+	VALHALLA_MATRIX_PATH,
+} from "@config/valhalla/valhalla-routing";
+
+import {
+	defaultValhallaConfig,
+} from "@config/valhalla/default-valhalla-config";
+
+import {
+	fetchRequest,
+} from "@http/fetch-request";
+
+async function getMatrix(
+	params: ValhallaMatrixRequestParams,
+): Promise<ValhallaMatrixResponse> {
+
+	const {
+		sources,
+		targets,
+		costing,
+		costing_options,
+		algorithm,
+		units,
+		verbose,
+		shape_format,
+	}: ValhallaMatrixRequestParams = params;
+
+	const {
+		host,
+		port,
+	}: ValhallaConfig = defaultValhallaConfig;
+	const url: string = `${host}:${port}${VALHALLA_MATRIX_PATH}`;
+
+	const matrixParams: ValhallaMatrixRequestParams = {
+		sources,
+		targets,
+		costing,
+		costing_options,
+		algorithm,
+		units,
+		verbose,
+		shape_format,
+	};
+
+	const requestParams: RequestParams = {
+		method: HTTP_METHOD_GET,
+		queryParams: {
+			json: JSON.stringify(matrixParams),
+		},
+	};
+
+	const result: unknown = await fetchRequest({
+		url,
+		params: requestParams,
+	}) as unknown;
+
+	const matrix: ValhallaMatrixResponse = result as ValhallaMatrixResponse;
+
+	return matrix;
+}
+```
+
+**UPPER_CASE** for configuration and other hardcoded literals:
+```ts
+// file: ./src/config/http/serialization.ts (exports literals only)
+export const HTTP_STATUS_OK: number = 200;
+export const DURATION_PRECISION: number = 2;
+export const JSON_INDENTATION: number = 2;
+
+// file: ./src/logging/format-response-metrics.ts (example consumer)
+import {
+	HTTP_STATUS_OK,
+	DURATION_PRECISION,
+	JSON_INDENTATION,
+} from "@config/http/serialization";
+```
+
+**camelCase** function + **camelCase** locals and parameters:
+```ts
+// file: ./src/types/logging/log-request-params-types.ts (exports parameter object shape)
+export interface LogRequestParams {
+	request: Request;
+	clientIp: string;
+}
+
+// file: ./src/logging/log-request.ts (imports types only; no configuration literals in this slice)
+import type {
+	LogRequestParams,
+} from "@types/logging/log-request-params-types";
+
+/**
+ * Logs the details of an incoming request. This is a utility function used by other loggers.
+ *
+ * @param {object} params - The parameters object.
+ * @param {Request} params.request - The incoming HTTP request.
+ * @param {string} params.clientIp - The IP address of the client.
+ */
+function logRequest(
+	params: LogRequestParams,
+): void {
+	const {
+		request,
+		clientIp,
+	}: LogRequestParams = params;
+
+	const {
+		url,
+	}: Request = request;
+	
+	const headersObject: Record<string, string> = {};
+
+	const headerEntries: [string, string][] = Array.from(request.headers.entries());
+	for (
+		let headerEntryIndex: number = 0;
+		headerEntryIndex < headerEntries.length;
+		headerEntryIndex++
+	) {
+		const [
+			headerKey,
+			headerValue,
+		]: [string, string] = headerEntries[headerEntryIndex];
+		
+		headersObject[headerKey] = headerValue;
+	}
+
+	console.log("Full URL:", url);
+	console.log("Client IP:", clientIp);
+	console.log("Headers:", headersObject);
+}
+```
+
+### Named Constants - No Magic Numbers
+A **magic number** is a **numeric literal** that appears **directly inside an expression** (calculations, comparisons, chained logic, **`return`** values, **`throw`** payloads, and similar) **without first being assigned** to a named **`const`** or **`let`**. **Assign any number to a binding** (`const ROW_LIMIT: number = 100;`, `const LATITUDE_MAX: number = 90;`) **before** using it in expressions-using a **`UPPER_CASE`** binding name when the value is **hardcoded / configuration**, as in **Consistent Naming Conventions**.
+
+**Bare literals** (`0`, **`1`**, **`-1`**, small indices) remain acceptable in **pure array index** / **`length`** bookkeeping when the meaning is obvious (for example `index + 1` for a one-based ID). **This rule targets numeric literals in expressions**; checks such as **`!== ""`** for empty strings or **`!== 0`** for numeric sentinels in domain logic are separate. Teams may still choose to name those values for readability, but they are **not** covered by the **magic number** definition above unless you adopt a stricter local policy. For anything domain-specific that **is** a bare **number** (timeouts, HTTP codes, limits, geodetic bounds), **name it first**.
+
+```ts
+// file: ./src/config/requests/throttling.ts (exports fixed limits before any expression consumes them)
+export const MAX_RETRY_COUNT: number = 3;
+export const REQUEST_TIMEOUT_MS: number = 5000;
+export const HTTP_OK_STATUS: number = 200;
+export const ROW_CAP: number = 100;
+
+// file: ./src/services/example-capped-rows.ts (imports configuration literals)
+import {
+	ROW_CAP,
+} from "@config/requests/throttling";
+
+const capped: number = Math.min(
+	rowCount,
+	ROW_CAP,
+);
+```
+
+### Multiline Formatting
+
+Canonical examples below follow these rules consistently-treat deviations as violations, not style options.
+
+- **`array` and `object` literals**: Always use **one physical line per** element or property, with a **trailing comma** after each item including the last (when multiline).
+- **Boolean predicates (all conditional uses)**: Whenever a compound condition uses **`&&`**, **`||`**, or chains comparisons, spread it so **each operand / sub-condition** occupies **its own physical line**. Apply this consistently to **`if`**, **`while`**, **`do…while`**, the **middle clause** of a **`for`**, the **condition** operand of **`?:`** (ternary), **`throw`/`return`** when the outgoing value is built from **`&&` / `||`**, and **`const`/`let`** bindings whose right-hand side is a **boolean expression**. Never stack multiple `&&` / `||` operands on the **same line**. For a **single-token** predicate (one identifier or one call), still break after the opening **`(`** and before **`)`** so it sits alone on its own line(s)-see snippets.
+- **`for` loops**: Always use **one physical line per** clause (**initializer**, **condition**, **update**) in the loop header-never cram the **`for (...)`** header onto one line. The **condition** clause obeys the **Boolean predicates** bullet above (**one operand per line**).
+- **`function` and `async function` signatures (non-empty parameter lists)**: Put **`async`** (when present), the **`function`** keyword, and the **function name** on the **same physical line**, immediately followed by **`(`**. Use **one physical line per formal parameter** (each parameter ends with a **trailing comma** per **Formal parameter lists** above). On the **next line**, close the list with **`)`**, immediately follow with **`:`** and the **return type**, then the opening **`{`** of the body, for example **`): Promise<SomeType> {`** or **`): SomeInterface {`**. **Empty** parameter lists stay compact on one line (**`function f()`** or **`async function f()`**)-no comma inside **`()`**.
+
+Canonical shape (`SomeType` / `SomeResult` / `SomeReturnType` may be a **`type` alias** or **`interface`**):
+```ts
+async function name(
+	params: SomeType,
+): Promise<SomeResult> {
+}
+
+function name(
+	params: SomeType,
+): SomeReturnType {
+}
+```
+
+- **Inline object types (annotations)**: Expand any inline **`{ … }`** object **type** (typed destructuring at **`:`**, plain bindings, casts, or nested fields-the **canonical snippet** below demonstrates the shape) across **multiple physical lines**, like **`interface`** bodies: **`{`** on its own line, **each** **`member: …;`** on its **own physical line**, and **`}`** on its **own physical line** before **`=`**, **`)`**, **`:`**, **`as`**, or the following token. Prefer a **`type` alias** or **`interface`** when the inline shape repeats.
+
+**Inline object types (annotations)**:
+```ts
+const {
+	method,
+}: {
+	method: string;
+} = originalRequest;
+
+const carrier: {
+	status?: number | string;
+} = {};
+```
+
+**`array` and `object` literals**:
+```ts
+// file: ./src/types/time/weekday-types.ts (exports weekday union)
+export type Weekday =
+	| "sunday"
+	| "monday"
+	| "tuesday"
+	| "wednesday"
+	| "thursday"
+	| "friday"
+	| "saturday";
+
+// file: ./src/config/calendar/weekday-order.ts (exports ordered list; imports `Weekday`)
+import type {
+	Weekday,
+} from "@types/time/weekday-types";
+
+export const WEEKDAYS: Weekday[] = [
+	"sunday",
+	"monday",
+	"tuesday",
+	"wednesday",
+	"thursday",
+	"friday",
+	"saturday",
+];
+
+// file: ./src/handlers/demo-object-literals.ts (imports matrix request type for object literal shape only)
+import type {
+	ValhallaMatrixRequestParams,
+} from "@types/valhalla/valhalla-matrix-types";
+
+const matrixParams: ValhallaMatrixRequestParams = {
+	sources,
+	targets,
+	costing,
+	costing_options,
+	algorithm,
+	units,
+	verbose,
+	shape_format,
+};
+```
+
+**`if` and similar conditionals**:
+```ts
+function checkExists(
+	value: unknown,
+): boolean {
+	let exists: boolean = false;
+
+	if (
+		value !== null
+		&& value !== undefined
+	) {
+		exists = true;
+	}
+
+	return exists;
+}
+
+function checkExistsNot(
+	value: unknown,
+): boolean {
+	let existsNot: boolean = false;
+
+	if (
+		value === null
+		|| value === undefined
+	) {
+		existsNot = true;
+	}
+
+	return existsNot;
+}
+```
+
+**conditional statements**:
+```ts
+const hasAuto: boolean = (
+	(
+		shapeAuto !== undefined
+		&& shapeAuto !== null
+		&& shapeAuto !== ""
+	)
+	&& (
+		durationAuto !== undefined
+		&& durationAuto !== null
+		&& durationAuto !== 0
+	)
+	&& (
+		distanceAuto !== undefined
+		&& distanceAuto !== null
+		&& distanceAuto !== 0
+	)
+);
+
+const hasPedestrian: boolean = (
+	(
+		shapePedestrian !== undefined
+		&& shapePedestrian !== null
+		&& shapePedestrian !== ""
+	)
+	&& (
+		durationPedestrian !== undefined
+		&& durationPedestrian !== null
+		&& durationPedestrian !== 0
+	)
+	&& (
+		distancePedestrian !== undefined
+		&& distancePedestrian !== null
+		&& distancePedestrian !== 0
+	)
+);
+```
+
+**`for` loop header** (iterate with a counted index rather than iteration helpers such as **`for…of`** or **`.map`** on the collection driving the loop):
+```ts
+for (
+	let batchIndex: number = 0;
+	batchIndex < maxConcurrentProcesses
+	&& batchIndex < totalBatches;
+	batchIndex++
+) {
+	const workerPromise: Promise<void> = processWorker({
+		batches,
+		batchName,
+		functionCallParams,
+		functionCallBatch,
+		totalBatches,
+		state,
+		combinedOutput,
+		outputType,
+	});
+	workerPromises.push(workerPromise);
+}
+```
+
+**Formal parameter lists with a single parameter** (`async function …(` / `)` may be multiline or single-line; the trailing comma is **always** present after the parameter):
+
+```ts
+import type {
+	FetchDataBody,
+	RowsByIdMapSerialized,
+} from "@types/dynamic-sql-builder/fetch-data-types";
+
+// file: `./src/handlers/sql/handle-fetch-data-request-v04.ts` - signature fragment demonstrates trailing comma only
+async function handleFetchDataRequestV04(
+	body: FetchDataBody,
+): Promise<RowsByIdMapSerialized> {
+}
+```
+
+## Fundamentals
+
+### Always Declare Variables with `let` or `const`
+
+- **Never** use `var`
+- Use **`const`** by default for bindings that are never reassigned; use **`let`** when a binding must be reassigned after initialization.
+- **Destructuring**: The **`const`** or **`let`** keyword applies to the **whole** destructuring declaration, and **you** cannot mark one binding `const` and another `let` in the same pattern. Use **`const`** when **no** binding introduced by that pattern will be reassigned later; use **`let`** when **any** binding from the pattern needs reassignment. If only **some** fields must stay mutable, prefer **`const { ... }`** plus separate **`let`** copies for the few values that change, or split into multiple declarations.
+- `let` and `const` are **block-scoped**. The engine **creates the binding** for the whole block before any statement runs, but the binding is **uninitialized** until the declaration line executes-the **temporal dead zone (TDZ)**. Reading the variable before that line throws. This differs from `var`, which is **function-scoped** and initializes with **`undefined`**. Prefer `let`/`const` to avoid **accidental reads before initialization** and **leakage across branches**.
+
+Example Code Snippet:
+```ts
+// file `./src/handlers/demo-let-and-const.ts`
+
+import type {
+	CoordinatesPoint,
+	TransformedTripPlaces,
+} from "@types/trips/trip-places-types";
+
+
+// const object destructuring - all variables are constant
+const {
+	placesIdsRequest,
+	tripPlacesKv,
+}: TransformedTripPlaces = transformTripPlaces({
+	tripPlaces,
+});
+
+// let flags - reassignment is required after a condition
+let isAccommodationExist: boolean = false;
+let accommodationCoordinates: CoordinatesPoint | undefined;
+
+if (
+	accommodation !== undefined
+) {
+	isAccommodationExist = true;
+	accommodationCoordinates = accommodation.coordinates as CoordinatesPoint;
+}
+
+// let array - declared first, assigned later in conditional branches
+let placesIdsAll: string[];
+
+if (
+	isAccommodationExist === true
+) {
+	placesIdsAll = [
+		accommodationIdString,
+		...placesIdsJobs,
+	];
+} else {
+	placesIdsAll = placesIdsJobs;
+}
+```
+
+### Always Use ES6 Module Syntax, Import Order, and Type Imports
+
+- Use `import` and `export`.
+- Always ensure your project is set up for ES modules.
+- **Never** use CommonJS (`require`, `module.exports`, `exports`).
+- Group imports (e.g. external packages, then internal modules), separated by blank lines.
+- **Import order**: ESLint enforces grouping and alphabetization via `import/order`. **Do not manually reorder imports.** Run `npx eslint PATH_FILE --fix` so ESLint applies `import/order` with `--fix` (replace `PATH_FILE` with the target path). For multiple changed files, pass every path: `npx eslint --fix PATH1 PATH2`. See **Post-edit validation** for the full check workflow after edits.
+- Use `import type { ... }` for types that are erased at compile time; you may use inline `type` in a value import when importing both values and types from the same module.
+- **Path aliases for internal modules**: import shared code with **stable alias specifiers** (strings that begin with **`@`** once, then use **`/`** for further segments), for example `"@api-types"`, `"@db-handling/query-handler-rls"`, **`@types/…`** for `./src/types/**`, **`@config/…`** for `./src/config/**`, and **`@classNames/…`** for `./src/styles/classNames/**`. Do **not** reach internal or workspace code through ascending relative paths (`"../…"`, `"../../…"`). Keep the set of alias roots **small and consistent** so moves between folders do not rewrite import strings.
+- **TypeScript configuration**: register every alias under `compilerOptions.paths` and set `compilerOptions.baseUrl` (typically `"."`) so `tsc` and the language service resolve imports and emit consistent declarations. When an alias names a directory tree, use matching wildcard patterns in `paths` (for example `"@foo/*": ["packages/foo/*"]`). Point each mapping at the real paths in your repo (`src/…`, `packages/…`, and so on), including every root you rely on in source.
+- **`paths` is not runtime**: Node and other runtimes do **not** read `tsconfig.json`. The same specifiers must also be understood by whatever **executes** or **bundles** the program: for example bundler `resolve.alias` (or a plugin that reads `tsconfig` paths), `tsx` / `ts-node` with `tsconfig-paths` (or equivalent), a build step that rewrites specifiers, or **workspace packages** with real package names. If you run plain `tsc` emit without path rewriting, emitted files still contain the alias strings; ensure the deployment pipeline or loader can resolve them.
+- **Node ESM without a bundler**: use **`package.json` `"imports"`** for subpath specifiers Node resolves natively (the usual convention is **`#…`** keys). Mirror those specifiers in `paths` toward your `.ts` sources so types and runtime agree.
+
+Example `compilerOptions` illustration (adjust paths to your layout):
+```json
+{
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"@api-types": ["src/api-types/index.ts"],
+			"@api-types/*": ["src/api-types/*"],
+			"@db-handling/*": ["src/db-handling/*"],
+			"@dynamic-sql-builder/*": ["packages/dynamic-sql-builder/*"],
+			"@auth/*": ["src/auth/*"],
+			"@environment/*": ["src/environment/*"],
+			"@types/*": ["src/types/*"],
+			"@config/*": ["src/config/*"],
+			"@states/*": ["src/states/*"],
+			"@content/*": ["src/content/*"],
+			"@styles/*": ["src/styles/*"],
+			"@classNames/*": ["src/styles/classNames/*"]
+		}
+	}
+}
+```
+
+Example:
+```ts
+// file: `./src/handlers/example-user-routes.ts` - demonstrates import grouping plus `export` surface
+import {
+	t,
+} from "elysia";
+
+import {
+	getSchemaTableColumns,
+	type ColumnsSchema,
+	type RowsByIdMapSerialized,
+} from "@dynamic-sql-builder/index.core";
+
+import {
+	dbFetchDataRLS,
+	dbUpsertDataRLS,
+	dbSoftDeleteDataRLS,
+} from "@db-handling/query-handler-rls";
+
+import type {
+	AuthContext,
+	JwtPayload,
+} from "@types/auth/auth-JWT-types";
+
+import {
+	databaseNameSupabase,
+} from "@environment/environment";
+
+import type {
+	ResponseMessage,
+} from "@api-types";
+
+// ... module implementation ...
+
+export {
+	handleFetchUserDataV04,
+	fetchUserDataSchemaV04,
+	handlePushUserDataV04,
+	pushUserDataSchemaV04,
+	handleSoftDeleteUserDataV04,
+	softDeleteUserDataSchemaV04,
+};
+```
+
+### Exports
+
+- **Prefer named exports** (`export function foo`, `export const BAR`, `export { foo, bar }`) over `export default`. Named exports are always refactorable - rename in one place, and the language service updates all import sites.
+- **Use `export default`** only when a framework or build tool requires it (Next.js `page.tsx` / `layout.tsx` / `route.ts`, `robots.ts`, `sitemap.ts`, Payload admin pages, PostCSS config, ESLint config). No inline comment is required when the framework convention is obvious from the file path.
+- **Handler and service modules** (`./src/handlers/**`, `./src/services/**`, `./src/config/**`, `./src/types/**`): either group all module-level exports at the bottom in a single `export { … }` block, or export each declaration inline at its definition - do not mix both styles in the same file.
+- **Framework entry files** must use inline exports at declaration. Canonical Next.js App Router examples:
+
+```ts
+export const revalidate: number = 3600;
+
+export async function generateMetadata(
+	props: HomePageProps,
+): Promise<Metadata> {
+	// ...
+}
+
+function HomePage(
+	props: HomePageProps,
+): JSX.Element {
+	// ...
+}
+
+export default HomePage;
+```
+
+- **Do not create barrel `index.ts` re-export files** unless a package boundary genuinely requires a stable public API surface. Re-export files that exist only for convenience hide dependency structure and slow down the TypeScript language service on large codebases.
+
+```ts
+// Named inline exports on declarations (preferred for types and config)
+export const MAX_RETRY_COUNT: number = 3;
+export interface RetryParams {
+	maxRetries: number;
+	delayMs: number;
+}
+
+// Named grouped export block at the bottom of a handler module
+export {
+	handleFetchUserDataV04,
+	handlePushUserDataV04,
+	handleSoftDeleteUserDataV04,
+};
+```
+
+## Object and Array Destructuring
+
+Use destructuring to improve clarity.
+
+### Object Destructuring:
+```ts
+// file: ./src/types/dynamic-sql/fetch-user-types.ts (exports request body referenced by handlers)
+export interface HandleFetchUserDataBody {
+	schemaName: string;
+	tableName: string;
+	fetchColumns: FetchColumnsParams;
+	bbox: BoundingBox;
+	orderByParams: OrderByParams;
+	limitParams: LimitParams;
+}
+
+// file: ./src/config/pg/column-fetch.ts (exports static table / column name literals)
+export const PG_TABLE_USERS: string = "users";
+export const FETCH_COLUMN_USER_ID_DIRECT: string = "id";
+export const FETCH_COLUMN_USER_ID_FK: string = "user_id";
+
+// file: `./src/handlers/db/handle-fetch-user-data-v04.ts` (imports types + configuration literals)
+import {
+	getSchemaTableColumns,
+	type ColumnsSchema,
+	type RowsByIdMapSerialized,
+} from "@dynamic-sql-builder/index.core";
+
+import {
+	dbFetchDataRLS,
+} from "@db-handling/query-handler-rls";
+
+import type {
+	AuthContext,
+	AuthenticatedUserDetails,
+} from "@types/auth/context-types";
+
+import type {
+	HandleFetchUserDataBody,
+} from "@types/dynamic-sql/fetch-user-types";
+
+import {
+	databaseNameSupabase,
+} from "@environment/environment";
+
+import {
+	FETCH_COLUMN_USER_ID_DIRECT,
+	FETCH_COLUMN_USER_ID_FK,
+	PG_TABLE_USERS,
+} from "@config/pg/column-fetch";
+
+async function handleFetchUserDataV04(
+	context: AuthContext,
+): Promise<RowsByIdMapSerialized> {
+	// Object Destructuring
+	const {
+		body,
+		store,
+	}: AuthContext = context;
+
+	const auth: AuthenticatedUserDetails = store.auth;
+	// Object Destructuring and Renaming
+	const {
+		jwtOriginalPayload: jwtPayload,
+		id: userId,
+	}: AuthenticatedUserDetails = auth;
+
+	const schemaName: string = body.schemaName;
+	// Object Destructuring
+	const {
+		tableName,
+		fetchColumns,
+		bbox,
+		orderByParams,
+		limitParams,
+	}: HandleFetchUserDataBody = body;
+
+	const columnsSchema: ColumnsSchema = getSchemaTableColumns({
+		databaseName: databaseNameSupabase,
+		schemaName,
+		tableName,
+	});
+
+	let columnNameUserId: string;
+	if (
+		tableName === PG_TABLE_USERS
+	) {
+		columnNameUserId = FETCH_COLUMN_USER_ID_DIRECT;
+	} else {
+		columnNameUserId = FETCH_COLUMN_USER_ID_FK;
+	}
+	fetchColumns[columnNameUserId] = {
+		whereValue: userId,
+	};
+
+	const userData: RowsByIdMapSerialized = await dbFetchDataRLS({
+		jwtPayload,
+		schemaName,
+		tableName,
+		columnsSchema,
+		fetchColumnsParams: fetchColumns,
+		bbox,
+		orderByParams,
+		limitParams,
+	});
+
+	return userData;
+}
+```
+
+### Array Destructuring:
+```ts
+// file: ./src/types/scheduling/time-window-types.ts (exports dual-window record + tuple alias)
+export interface DualTimeWindows {
+	windowsA: TimeWindows;
+	windowsB: TimeWindows;
+}
+
+// file: ./src/scheduling/intersect-time-windows.ts (imports `DualTimeWindows` + array helpers)
+import type {
+	DualTimeWindows,
+	TimeWindows,
+	TimeWindow,
+} from "@types/scheduling/time-window-types";
+
+function intersectTimeWindows(
+	dualTimeWindows: DualTimeWindows,
+): TimeWindows {
+	// Object Destructuring
+	const {
+		windowsA,
+		windowsB,
+	}: DualTimeWindows = dualTimeWindows;
+
+	const intersected: TimeWindows = [];
+
+	let indexA: number = 0;
+	let indexB: number = 0;
+
+	while (
+		indexA < windowsA.length
+		&& indexB < windowsB.length
+	) {
+		// Array Destructuring
+		const [
+			startA,
+			endA,
+		]: TimeWindow = windowsA[indexA];
+		// Array Destructuring
+		const [
+			startB,
+			endB,
+		]: TimeWindow = windowsB[indexB];
+
+		const startMax: number = Math.max(
+			startA,
+			startB,
+		);
+		const endMin: number = Math.min(
+			endA,
+			endB,
+		);
+
+		if (
+			startMax < endMin
+		) {
+			intersected.push([
+				startMax,
+				endMin,
+			]);
+		}
+
+		if (
+			endA < endB
+		) {
+			indexA += 1;
+		} else {
+			indexB += 1;
+		}
+	}
+
+	return intersected;
+}
+```
+
+## TypeScript Types
+
+### Types and interfaces architecture
+
+- **Declare and define** reusable **`interface`** and **`type` alias** declarations **only** under **`./src/types/**/*.ts`**, grouped by **module** and mirrored in the file name (for example **`./src/types/auth/auth-JWT-types.ts`** for auth-related JWT shapes).
+- **Import** those names with **`import type { … }`** (or mixed **`import { type … }`**) via the **`@types/…`** alias (for example **`@types/auth/auth-JWT-types`**). Register **`@types/*`** in **`compilerOptions.paths`** together with **`@config/*`** and your other roots (see **Always Use ES6 Module Syntax, Import Order, and Type Imports**).
+- Cover **domain data structures**, **function parameter and return shapes**, **class-related types**, unions, literals, and any other **named compile-time shapes** shared by the team in those modules. **Do not** add parallel **`interface` / `type`** declarations in **`./src/handlers/**`**, **`./src/services/**`**, or arbitrary feature folders. **Never** keep production **`interface`/`type`** definitions outside **`./src/types/**`**.
+- **For React component types** (`./src/types/components/**`): files are generalized per feature group - do not create one type file per component; create one per group because types are reused within a component group. Use **`PascalCase`** for the directory and the file prefix, appending **`-types`** (e.g., `./src/types/components/UserProfile/UserProfile-types.ts` covers all `UserProfile` components). See **code-rules-TypeScript-React-Tailwind.md** for full React component file naming rules.
+- Prefer **`interface`** for reusable **object** shapes where it fits; use a **`type` alias** when **`interface` cannot express the shape** (for example unions of object types, discriminated unions whose members differ, tuples, mapped types, conditional types, or intersections that do not map cleanly to a single **`interface`** declaration).
+- **Inline anonymous object types** in bindings (for example **`const { … }: { … } = …`**) remain acceptable **only** for **single-use**, **non-exported** local annotations, formatted per **Inline object types (annotations)** in **Multiline Formatting**; introduce a **`type`/`interface`** under **`./src/types/**`** as soon as a shape repeats, leaves the module, or names a stable domain concept.
+
+### Primitives (`string`, `number`, `boolean`)
+
+TypeScript includes all JavaScript's primitive types.
+
+**Always** write an explicit **`: string`**, **`: number`**, or **`: boolean`** on **function parameters**, **locals**, and **`const` / `let` bindings** when the stored value is that primitive. Do **not** rely on type inference for primitives.
+
+### Interfaces, classes, and `type` aliases
+
+**Always** make the **named shape** visible at the binding: use an explicit **`interface`**, **`type` alias**, or **class** reference on the variable or on a **typed destructuring pattern** (for example **`const { a, b }: MyDto = dto`**), with **`interface`/`type`** definitions living under **`./src/types/**`** per **Types and interfaces architecture**. Prefer **`interface`** for reusable object shapes where it fits; reach for **`type`** when **`interface` cannot express the shape** (see **Types and interfaces architecture**). A **one-off inline object type** is acceptable only when the shape is not reused; write it **multiline** (**`{`** alone; **each** **`member: …;`** on its **own physical line**; **`}`** alone before **`=`**/`:`/`as`/`)`) per **Inline object types (annotations)** in **Multiline Formatting**. Otherwise introduce a **`type` alias** or **`interface`** in **`./src/types/**`. If a value is **only** primitives and does not carry a named domain type, the **primitive annotations** above suffice.
+
+```ts
+// file: ./src/config/time/duration-factors.ts (exports fixed multipliers referenced by latency math)
+export const SECONDS_IN_MINUTE: number = 60;
+
+// file: ./src/services/example-runtime-path.ts (imports primitive usage sample)
+import {
+	SECONDS_IN_MINUTE,
+} from "@config/time/duration-factors";
+
+const MINUTES: number = 30;
+
+const secondsMaxThreshold: number = MINUTES * SECONDS_IN_MINUTE;
+const duration: number = performance.now() - startTime;
+const path: string = new URL(originalRequest.url).pathname;
+
+const isValidBbox: boolean = validateBoundingBox(
+	bbox,
+);
+```
+
+### Arrays (`T[]` or `Array<T>`)
+
+Give every array-valued binding an explicit element type (**`T[]`** or **`Array<T>`**) so composites stay as visible as primitives.
+
+Annotate arrays:
+
+```ts
+// file: `./src/handlers/demo-weekdays-binding.ts` - imports weekday union annotated on the array binding
+import type {
+	Weekday,
+} from "@types/time/weekday-types";
+
+const weekdays: Weekday[] = [
+	"sunday",
+	"monday",
+	"tuesday",
+	"wednesday",
+	"thursday",
+	"friday",
+	"saturday",
+];
+```
+
+### Optional and Union Types
+
+Use a question mark (`?`) for optional properties, and the union operator (`|`) for multiple possible types:
+
+```ts
+// file: ./src/types/scheduling/mtsp-types.ts (exports optional-day + place records)
+export interface OpenHours {
+	monday?: TimeWindows | null;
+	tuesday?: TimeWindows | null;
+	wednesday?: TimeWindows | null;
+	thursday?: TimeWindows | null;
+	friday?: TimeWindows | null;
+	saturday?: TimeWindows | null;
+	sunday?: TimeWindows | null;
+}
+
+export interface MtspPlace {
+	id: string;
+	geometry: GeometryPoint;
+	open_hours: OpenHours;
+	tag_ids: number[];
+	recommended_visit?: number;
+}
+```
+
+### Literal Types and Type Inference
+
+Literal types constrain a value to a finite set of strings or numbers. Whenever the domain is **bounded and known at design time**, prefer a **string literal union** over a plain `string` - TypeScript will reject any out-of-domain value at compile time and editors will autocomplete valid options. Declare these unions under `./src/types/**` per **Types and interfaces architecture**.
+
+```ts
+// file: ./src/types/time/weekday-types.ts
+export type Weekday =
+	| "sunday"
+	| "monday"
+	| "tuesday"
+	| "wednesday"
+	| "thursday"
+	| "friday"
+	| "saturday";
+
+// file: ./src/types/routing/profile-types.ts
+export type RoutingProfile =
+	| "auto"
+	| "pedestrian"
+	| "bicycle";
+
+// file: ./src/types/db/query-return-types.ts
+export type DbReturnType =
+	| "mapSerialized"
+	| "map"
+	| "array"
+	| "object";
+```
+
+Use literal union types as parameter and field types so out-of-union values fail at compile time rather than silently at runtime:
+
+```ts
+// file: ./src/routing/example-routing-request.ts
+import type {
+	RoutingProfile,
+} from "@types/routing/profile-types";
+
+function buildProfileUrl(
+	profile: RoutingProfile,
+): string {
+	const url: string = `https://router.example.com/${profile}`;
+	return url;
+}
+
+// buildProfileUrl("bike");  // compile error - "bike" is not assignable to RoutingProfile
+// buildProfileUrl("auto");  // valid
+```
+
+For **`number | string`** style unions on a binding (still annotate primitives; use **`UPPER_CASE`** named constants for fixed protocol values):
+```ts
+// file: ./src/config/http/status-literals.ts (exports default status literal)
+export const HTTP_STATUS_LITERAL: number = 200;
+
+// file: ./src/http/example-request-context.ts (consumer; inline object types stay local per Multiline Formatting)
+import {
+	HTTP_STATUS_LITERAL,
+} from "@config/http/status-literals";
+
+const duration: number = performance.now() - startTime;
+const {
+	method,
+}: {
+	method: string;
+} = originalRequest;
+const path: string = new URL(originalRequest.url).pathname;
+const statusCarrier: {
+	status?: number | string;
+} = {};
+
+const status: number | string = statusCarrier.status ?? HTTP_STATUS_LITERAL;
+```
+
+### Type Assertions
+
+Assertions appear where runtime validation already narrowed the truth, but TypeScript cannot prove it:
+```ts
+// file: `./src/auth/example-jwt-followup.ts` - imports payload contract from types
+import type {
+	JwtPayload,
+} from "@types/auth/auth-JWT-types";
+
+// jwksRemote is a function that jose.jwtVerify will call to get the key
+const {
+	payload,
+} = await jose.jwtVerify(
+	token,
+	jwksRemote,
+	verifyOptions,
+);
+
+if (
+	payload.sub === undefined
+) {
+	const jwtRejected: null = null;
+	return jwtRejected;
+}
+
+// Validate essential claims after successful verification
+const jwtPayload: JwtPayload = payload as JwtPayload;
+
+const {
+	sub: id,
+	email,
+}: JwtPayload = jwtPayload;
+```
+
+### `null` and `undefined` Checks
+
+Use strict null checks enabled, always guard against `null` or `undefined`:
+```ts
+// file: `./src/config/database/default-schemas.ts`
+export const DEFAULT_PG_SCHEMA: string = "public";
+
+// file: ./src/types/gis/example-schema-guardrails-types.ts
+import type {
+	BoundingBox,
+} from "@types/gis/bbox";
+
+export interface ExampleApplySchemaGuardrailsParams {
+	databaseName: string;
+	schemaName?: string | null;
+	tableName: string;
+	bbox?: BoundingBox | null;
+}
+
+// file: `./src/handlers/example-schema-guardrails.ts`
+import {
+	DEFAULT_PG_SCHEMA,
+} from "@config/database/default-schemas";
+
+import {
+	getSchemaTableColumns,
+} from "@dynamic-sql-builder/index.core";
+
+import type {
+	ColumnsSchema,
+} from "@types/dynamic-sql/columns-schema";
+
+import type {
+	ExampleApplySchemaGuardrailsParams,
+} from "@types/gis/example-schema-guardrails-types";
+
+import {
+	validateBoundingBox,
+} from "@gis-validation/validate-bounding-box";
+
+export function exampleApplySchemaGuardrails(
+	params: ExampleApplySchemaGuardrailsParams,
+): ColumnsSchema {
+	const {
+		databaseName,
+		schemaName,
+		tableName,
+		bbox,
+	}: ExampleApplySchemaGuardrailsParams = params;
+
+	let schemaNameResolved: string;
+	if (
+		schemaName === undefined
+		|| schemaName === null
+	) {
+		schemaNameResolved = DEFAULT_PG_SCHEMA;
+	} else {
+		schemaNameResolved = schemaName;
+	}
+
+	if (
+		bbox !== undefined
+		&& bbox !== null
+	) {
+		const isValidBbox: boolean = validateBoundingBox(
+			bbox,
+		);
+
+		if (
+			isValidBbox === false
+		) {
+			const invalidBboxError: Error = new Error(
+				"Invalid bounding box: Coordinates are out of bounds or malformed.",
+			);
+			throw invalidBboxError;
+		}
+	}
+
+	const columnsSchema: ColumnsSchema = getSchemaTableColumns({
+		databaseName,
+		schemaName: schemaNameResolved,
+		tableName,
+	});
+
+	if (
+		columnsSchema === undefined
+		|| columnsSchema === null
+	) {
+		const missingTableError: Error = new Error(
+			"Table or Schema does not exist.",
+		);
+		throw missingTableError;
+	}
+
+	return columnsSchema;
+}
+```
+
+### Never Use `any` - Use `unknown` When Types Are Truly Erased
+
+Never use **`any`**. Prefer **explicit Types**, **unions**, **intersections**, and **generics** so mistakes surface at compile time.
+
+**Use `unknown`** (or **`Promise<unknown>`**, **`unknown[]`**, etc.) when values **cannot be known statically** until **runtime inspection** resolves them-for example **`response.json()`**, **incoming HTTP payloads before validation**, **`Record<string, unknown>`** from external systems, **message queues**, or **`process.env`-shaped blobs**. Narrow with **type guards**, **schema validators** (for example **Zod**), or **narrowing checks** immediately after ingestion; **`unknown`** is preferable to pretending you already hold a richer type.
+
+**Avoid gratuitous `unknown`**-once you have validated shape, spell out concrete domain types downstream.
+
+Example with **imported domain types** and a **string-literal union**:
+```ts
+// file: ./src/types/dynamic-sql/db-fetch-rows.ts (imports row shapes exported elsewhere before composing unions here)
+import type {
+	RowsByIdMapSerialized,
+	RowsByIdMap,
+	RowsArray,
+	RowsById,
+} from "@types/dynamic-sql/rows-shapes";
+
+export type DbFetchDataRows =
+	RowsByIdMapSerialized
+	| RowsByIdMap
+	| RowsArray
+	| RowsById;
+
+export type DbFetchDataReturnType =
+	| "mapSerialized"
+	| "map"
+	| "array"
+	| "object";
+```
+
+### Declare object structures with `interface`
+
+Name reusable object shapes as **`interface`** members declared under **`./src/types/**`** (members use **`;`** separators inside the body). This matches **Interfaces, classes, and `type` aliases** above: exported or shared shapes should be **`interface`** when practical (or a **`type` alias** when you need unions, mapped types, or any construct **`interface` cannot express**) so call sites can annotate with that name.
+
+Example with **`interface`**, optional fields with `?`, and reused types:
+```ts
+// file: ./src/types/dynamic-sql/handlers-and-messages-types.ts - single module exporting multiple coherent records
+export interface FetchData {
+	databaseName: string;
+	schemaName: string;
+	tableName: string;
+	fetchColumns: FetchColumnsParams;
+	bbox: BoundingBox;
+	orderBy?: OrderByParams;
+	limit?: number;
+}
+
+export interface CreateSchedule {
+	tableName: string;
+	placesIds: string[];
+	days: number;
+	maxPlacesPerDay: number;
+}
+
+/**
+ * @interface RequestLogState
+ * @description Defines the structure for storing request - specific data in the context store.
+ */
+export interface RequestLogState {
+	startTime: number;
+	request: Request;
+}
+
+export interface GetTableSchema {
+	databaseName?: string;
+	schemaName?: string;
+	tableName: string;
+}
+
+export interface ResponseMessage {
+	success: boolean;
+	message: string;
+}
+```
+
+## Config Files
+
+- **Declare and define** static behavioral values - tuning knobs, limits, literals shared across modules, protocol constants, path segments you own, feature flags, and other **behavioral configuration** - **only** under **`./src/config/**/*.ts`**, mirrored by module (for example **`./src/config/gis/coordinates.ts`**).
+- **Import** configuration with the **`@config/…`** alias (for example **`@config/gis/coordinates`**). Register **`"@config/*": ["src/config/*"]`** in **`compilerOptions.paths`** (see **Always Use ES6 Module Syntax, Import Order, and Type Imports**).
+- When values are truly **shared static configuration**, define them once under **`./src/config/**`** and **import** via **`@config/…`** inside **`function`** bodies; keep **`interface`/`type`** DTO declarations in **`./src/types/**`** with **primitive or structural fields** instead of repeating the same literals inline.
+- **For React component config** (`./src/config/components/**`): files are generalized per feature group - do not create one config file per component; create one per group because config literals are reused within a component group. Use **`PascalCase`** for the directory and the file prefix, appending **`-config`** (e.g., `./src/config/components/UserProfile/UserProfile-config.ts`). See **code-rules-TypeScript-React-Tailwind.md** for full React component file naming rules.
+- **Never** sprinkle freestanding **`export const SOME_LIMIT = …`** (or equivalent configuration) across services, helpers, or route files outside **`./src/config/**`; lift them into the proper **`./src/config/<module>/….ts`** file.
+- **Config is not content**: user-facing rendered strings (labels, headings, button text, empty-state messages) belong in **`./src/content/**/*.ts`** (imported via **`@content/…`**), not in `./src/config/**`. Register **`"@content/*": ["src/content/*"]`** in **`compilerOptions.paths`**.
+- **Config is not state logic**: pure state transition functions, reducers, action builders, and initial state builders belong in **`./src/states/**/*.ts`** (imported via **`@states/…`**), not in `./src/config/**`. Register **`"@states/*": ["src/states/*"]`** in **`compilerOptions.paths`**.
+- **Config is not presentation styling**: reusable Tailwind class names belong in **`./src/styles/classNames/**/*.ts`** (imported via **`@classNames/…`**), not in `./src/config/**`. Register **`"@classNames/*": ["src/styles/classNames/*"]`** in **`compilerOptions.paths`**.
+
+Example (**`./src/config/gis/coordinates.ts`**):
+
+```ts
+// file: ./src/config/gis/coordinates.ts
+export const MIN_LATITUDE: number = -90;
+export const MAX_LATITUDE: number = 90;
+export const MIN_LONGITUDE: number = -180;
+export const MAX_LONGITUDE: number = 180;
+```
+
+## Module Design
+
+### One Responsibility per Module
+
+Every **`*.ts`** module owns **exactly one primary concern**. Choose one concern type and do not mix it with another in the same file.
+
+**Canonical concern types and their homes:**
+
+- **Fetch / transport** (`./src/http/**`, `./src/services/**`): Issues I-O - HTTP requests, database queries, file reads. Returns a raw or typed response. Does not validate domain data, contain business rules, or transform output shapes.
+- **Validate** (`./src/validation/**`, `./src/gis-validation/**`): Checks structural or domain invariants. Returns **`boolean`** or **`throw`**s a named **`Error`**. Does not fetch data or own data transformations.
+- **Transform / map** (`./src/transform/**`, `./src/formatting/**`): Converts one data shape to another through pure logic. Does not perform I-O and does not validate.
+- **Orchestrate** (`./src/handlers/**`, `./src/services/**`): Sequences fetch, validate, and transform operations by importing and calling them at named boundaries. Owns the workflow, not the individual operations.
+- **Configure** (`./src/config/**`): Behavioral fixed literals and constants only. See **Config Files**. Does not contain user-facing rendered strings or state transition logic.
+- **Define types** (`./src/types/**`): Compile-time shapes only. See **Types and interfaces architecture**.
+- **Pure state transition logic** (`./src/states/**`): Reducers, state factories, action builders, initial state builders, derived selectors, reset helpers. No JSX. No React Hooks. No `Context` creation. Imported via `@states/…`. For React components, files are generalized per feature group using `PascalCase` directories and the `<FeatureGroup>-state.ts` naming pattern (e.g., `./src/states/Counter/Counter-state.ts`).
+- **User-facing static content** (`./src/content/**`): Every hardcoded static value that renders as user-visible output - labels, headings, button text, descriptions, empty-state messages, nav text, pricing copy. Imported via `@content/…`. Never placed in `./src/config/**` or inlined in source files. For React components, files are generalized per feature group using `PascalCase` directories and the `<FeatureGroup>-content.ts` naming pattern (e.g., `./src/content/Counter/Counter-content.ts`).
+- **UI view components** (`./src/components/**`): Each `.tsx` file declares and exports exactly one React component. A List component (`ComponentNameList.tsx`) orchestrates iteration and collection layout only; an Item component (`ComponentName.tsx`) renders a single data node and handles local item events. These two concerns must never be merged into one file. Both reside together in the same PascalCase feature directory (e.g., `./src/components/Notifications/`). See **code-rules-TypeScript-React-Tailwind.md** for full React component rules.
+- **Reusable styling / Tailwind class strings** (`./src/styles/classNames/**`): Fixed Tailwind utility strings, exported as `UPPER_CASE` constants. Imported via `@classNames/…`. Files are named in `PascalCase` matching the component or feature group, appending `-classNames` (e.g., `Button-classNames.ts`, `Notification-classNames.ts`). Single-use `className` strings may remain inline in JSX; repeated class strings must be extracted here before their second use.
+
+**Rules:**
+
+- **Name each file after its single concern**: `fetch-matrix.ts` fetches; `validate-bounding-box.ts` validates; `map-routes.ts` transforms; `handle-get-matrix.ts` orchestrates.
+- **Orchestrators compose** - they import and call fetch, validate, and transform functions at clearly named call sites. They do not re-implement those concerns inline.
+- **Never** write HTTP I-O inside a validator or a transformer.
+- **Never** embed domain validation inside a fetch function.
+- **Never** scatter `export const SOME_LITERAL = …` in service or handler files; lift into `./src/config/**` (see **Config Files**).
+- **When helpers accumulate spanning two concerns** (for example a module that both issues HTTP requests and transforms the response), that is the signal to split into two files and compose them in an orchestrator.
+- **One component per `.tsx` file**: never declare the structure of both a collection orchestrator (`ComponentNameList`) and its individual items (`ComponentName`) in the same file. Extract the Item into its own `ComponentName.tsx` and have the List import it. When `ComponentName` is buried inside `ComponentNameList.tsx`, it cannot be independently tested or reused elsewhere, and a change to the Item's layout will always touch the List's orchestration code - a direct violation of SoC and Iterability.
+
+The modules already illustrated in this document each demonstrate a single concern: `./src/http/fetch-request.ts` transports only (see **Use `async` and `await`**); `./src/gis-validation/validate-bounding-box.ts` validates only (see **Function Structure**); `./src/config/gis/coordinates.ts` configures only (see **Config Files**).
+
+**Orchestrator composed from single-concern imports:**
+
+```ts
+// file: ./src/types/places/get-places-types.ts (exports request + result shapes)
+import type {
+	BoundingBox,
+} from "@types/gis/bbox";
+
+import type {
+	FetchColumnsParams,
+} from "@types/dynamic-sql/fetch-columns-types";
+
+export interface GetPlacesParams {
+	bbox: BoundingBox;
+	jwtPayload: JwtPayload;
+	schemaName: string;
+	tableName: string;
+	fetchColumns: FetchColumnsParams;
+}
+
+// file: ./src/services/places/get-places.ts (orchestrates: validate -> fetch -> return)
+import type {
+	GetPlacesParams,
+} from "@types/places/get-places-types";
+
+import type {
+	RowsByIdMapSerialized,
+} from "@types/dynamic-sql/rows-shapes";
+
+import {
+	validateBoundingBox,
+} from "@gis-validation/validate-bounding-box";
+
+import {
+	dbFetchDataRLS,
+} from "@db-handling/query-handler-rls";
+
+async function getPlaces(
+	params: GetPlacesParams,
+): Promise<RowsByIdMapSerialized> {
+	const {
+		bbox,
+		jwtPayload,
+		schemaName,
+		tableName,
+		fetchColumns,
+	}: GetPlacesParams = params;
+
+	const isValidBbox: boolean = validateBoundingBox(bbox);
+
+	if (
+		isValidBbox === false
+	) {
+		const invalidBboxError: Error = new Error(
+			"Invalid bounding box.",
+		);
+		throw invalidBboxError;
+	}
+
+	const places: RowsByIdMapSerialized = await dbFetchDataRLS({
+		jwtPayload,
+		schemaName,
+		tableName,
+		fetchColumns,
+		bbox,
+	});
+
+	return places;
+}
+```
+
+### Extract Repeated Logic (DRY)
+
+When the **same logical step** - a guard, a normalization, a computation, or a data mapping - appears in **two or more places**, **extract it once** as a **named function** before writing it a second time. This applies equally within a single module and across modules.
+
+**The trigger is duplication itself.** The moment you find yourself writing code that already exists somewhere else, stop and extract before pasting.
+
+**Rules:**
+
+- **Never paste duplicate blocks.** Duplicate logic across two call sites is a violation, regardless of how short the block is.
+- **Name the extracted function clearly** after what it does: `resolveSchemaName`, `buildRequestUrl`, `normalizeTimestamp`. The name is the explanation.
+- **Place the helper at module scope**, declared below its first caller, per **Files Structure - Function flow and ordering**. Never nest it inside another function's body (see **Named functions at module scope; no nested declarations**).
+- **When a helper is needed by two or more modules**, move it to its own file in the appropriate subtree (`./src/validation/**`, `./src/transform/**`, `./src/http/**`, and so on) and import it via the matching alias. Do not copy it.
+- **The same discipline applies to type shapes**: once an inline object type repeats or leaves the module, name it under `./src/types/**` instead of duplicating the annotation (see **Types and interfaces architecture** and **Inline object types (annotations)** in **Multiline Formatting**).
+
+The extract-once rule and the module-scope placement rule are complementary: **Named functions at module scope; no nested declarations** tells you **where** helpers live; this rule tells you **when** to create them.
+
+```ts
+// file: ./src/types/db/schema-table-params-types.ts (exports request shapes for both handlers)
+export interface FetchTableParams {
+	schemaName?: string | null;
+	tableName: string;
+	fetchColumns: FetchColumnsParams;
+	jwtPayload: JwtPayload;
+}
+
+export interface UpsertTableParams {
+	schemaName?: string | null;
+	tableName: string;
+	rows: unknown[];
+	jwtPayload: JwtPayload;
+}
+
+// file: ./src/services/db/multi-table-service.ts
+import type {
+	FetchTableParams,
+	UpsertTableParams,
+} from "@types/db/schema-table-params-types";
+
+import type {
+	RowsByIdMapSerialized,
+	UpsertResult,
+} from "@types/dynamic-sql/rows-shapes";
+
+import {
+	DEFAULT_PG_SCHEMA,
+} from "@config/database/default-schemas";
+
+import {
+	dbFetchDataRLS,
+	dbUpsertDataRLS,
+} from "@db-handling/query-handler-rls";
+
+// Both orchestrators call resolveSchemaName instead of repeating the guard block.
+async function fetchTable(
+	params: FetchTableParams,
+): Promise<RowsByIdMapSerialized> {
+	const {
+		schemaName: schemaNameRaw,
+		tableName,
+		fetchColumns,
+		jwtPayload,
+	}: FetchTableParams = params;
+
+	const schemaName: string = resolveSchemaName(schemaNameRaw);
+
+	const rows: RowsByIdMapSerialized = await dbFetchDataRLS({
+		jwtPayload,
+		schemaName,
+		tableName,
+		fetchColumns,
+	});
+
+	return rows;
+}
+
+async function upsertTable(
+	params: UpsertTableParams,
+): Promise<UpsertResult> {
+	const {
+		schemaName: schemaNameRaw,
+		tableName,
+		rows,
+		jwtPayload,
+	}: UpsertTableParams = params;
+
+	const schemaName: string = resolveSchemaName(schemaNameRaw);
+
+	const result: UpsertResult = await dbUpsertDataRLS({
+		jwtPayload,
+		schemaName,
+		tableName,
+		rows,
+	});
+
+	return result;
+}
+
+// Extracted once at module scope, below both callers (per Files Structure - Function flow and ordering).
+// If a third module needed this helper, it would move to ./src/db/resolve-schema-name.ts and be imported.
+function resolveSchemaName(
+	schemaName: string | null | undefined,
+): string {
+	let resolved: string;
+
+	if (
+		schemaName === undefined
+		|| schemaName === null
+	) {
+		resolved = DEFAULT_PG_SCHEMA;
+	} else {
+		resolved = schemaName;
+	}
+
+	return resolved;
+}
+```
+
+## Files Structure
+
+### Imports
+
+- **Every** **`*.ts`** module **starts with all `import`/`export type` declarations** grouped per **Always Use ES6 Module Syntax, Import Order, and Type Imports**; **imports precede** any **`function`**, **`class`**, or **`const`** implementation.
+
+### Function flow and ordering inside a module
+
+- **Top-to-bottom abstraction**: Order code so the file reads **from higher abstraction to lower**. After imports, place **orchestrators** (**handlers**, **drivers**, **managers**) **first**, then **narrow helpers** and **single-purpose utilities** **toward the bottom**. Avoid layouts where the entry flow is buried under helpers (a pattern sometimes seen in other ecosystems); the **primary story** should be readable **from the top down**. When the helpers tier spans two or more concern types (fetch helpers alongside transform helpers, for example), that is the signal to split the file into separate single-concern modules per **Module Design - One Responsibility per Module**.
+- **File-local callees**: When **`function` A** in this module calls **`function` B** in the **same** file, define **B below A** so dependency direction matches reading order. Do **not** rely on **`function` hoisting** to call something declared **above** the callsite. If you need mutual recursion or an upward reference, **split** logic into another module and **`import`** it, or refactor so the callee sits lower.
+- **Imported symbols** (`import`, **`import type`**) **may be referenced from anywhere** in the module; ordering rules apply to **`function`** declarations lexically scoped in **this** translation unit.
+
+## Conditional Statements
+
+Compound boolean conditions follow **Boolean predicates (all conditional uses)** under **Multiline Formatting** (**one operand or sub-condition per physical line** everywhere such a predicate appears).
+
+### Strict Equality
+
+- Always use explicit checks (`===` and `!==`)
+- Never use loose checks (`==` or `!=`)
+```ts
+function checkExists(
+	value: unknown,
+): boolean {
+	let exists: boolean = false;
+
+	if (
+		value !== null
+		&& value !== undefined
+	) {
+		exists = true;
+	}
+
+	return exists;
+}
+
+function checkExistsNot(
+	value: unknown,
+): boolean {
+	let existsNot: boolean = false;
+
+	if (
+		value === null
+		|| value === undefined
+	) {
+		existsNot = true;
+	}
+
+	return existsNot;
+}
+```
+
+### `switch` Statements
+
+Use `switch` when branching on a **discriminated union** or a **string literal union** - the compiler verifies exhaustiveness via the `default` branch, so any unhandled variant surfaces at review time rather than silently at runtime.
+
+**Rules:**
+
+- Wrap every `case` body in `{ }` braces so variable declarations stay scoped to the branch.
+- **Always** include a `default` branch. In an exhaustive switch over a known union, let `default` throw a named `Error` to surface any variant that slips through (per **Return defined variables** and **Error handling with `try…catch`**).
+- **Never** fall through from one `case` to the next (no missing `break` or `return`). Each `case` block must end with a `return`, a `throw`, or a `break`.
+- Per **Return defined variables**, every `return` inside a `switch` still assigns to a named binding first, then returns that binding.
+
+```ts
+// file: ./src/types/db/query-return-types.ts
+export type DbReturnType =
+	| "mapSerialized"
+	| "map"
+	| "array"
+	| "object";
+
+// Exhaustive switch - canonical shape (see also Error handling with try...catch)
+switch (returnType) {
+	case "mapSerialized": {
+		const rowsByIdMapSerialized: RowsByIdMapSerialized = convertRowsToMapIdSerialized(
+			rowsArray,
+		);
+		return rowsByIdMapSerialized;
+	}
+	case "map": {
+		const rowsByIdMap: RowsByIdMap = convertRowsToMapId(
+			rowsArray,
+		);
+		return rowsByIdMap;
+	}
+	case "array": {
+		return rowsArray;
+	}
+	case "object": {
+		const rowsById: RowsById = convertRowsToObjectId(
+			rowsArray,
+		);
+		return rowsById;
+	}
+	default: {
+		const unknownReturnTypeError: Error = new Error(
+			"Unknown returnType value",
+		);
+		throw unknownReturnTypeError;
+	}
+}
+```
+
+### Ternary Operator
+
+A ternary (`condition ? valueA : valueB`) is acceptable **only** when all three conditions hold:
+
+1. Both branches are **single tokens** - identifiers, simple literals, or a single named function call.
+2. The result is **assigned to a named binding** (never used as a bare statement for side effects).
+3. The expression is **not nested** inside another ternary.
+
+**Never** nest ternaries. **Never** use a ternary as a statement. When a branch needs computation or multi-step logic, use `if`/`else` and assign to a `let` binding instead.
+
+```ts
+// Acceptable - single-token branches, result assigned to a named binding
+const schemaName: string = (
+	rawSchema !== null
+		? rawSchema
+		: DEFAULT_PG_SCHEMA
+);
+```
+
+### Early Returns (Guard Clauses)
+
+Use **early returns** at the beginning of a function body to reject invalid inputs or boundary conditions before any real work begins. This keeps the main logic at shallow nesting and makes the happy path easy to follow.
+
+**Rules:**
+
+- Place guard-clause returns in the **Data layer** of the function body (see **Function Structure**).
+- Each early `return` must follow **Return defined variables**: assign to a binding, then return that binding.
+- Each early `throw` must follow the same rule: assign `new Error(…)` to a `const`, then throw that identifier.
+- Do not guard-clause in the middle of the Operation layer; move such checks earlier or extract a named validator.
+
+```ts
+// file: ./src/types/gis/validate-bbox-params-types.ts
+export interface ValidateBboxParams {
+	bbox: BoundingBox | null | undefined;
+}
+
+// Guard clauses in the Data layer reject invalid input before business logic runs.
+function validateAndGetBbox(
+	params: ValidateBboxParams,
+): BoundingBox {
+	const {
+		bbox,
+	}: ValidateBboxParams = params;
+
+	// Guard clause - early rejection in the Data layer
+	if (
+		bbox === undefined
+		|| bbox === null
+	) {
+		const missingBboxError: Error = new Error(
+			"bbox is required but was not provided.",
+		);
+		throw missingBboxError;
+	}
+
+	// Operation layer - bbox is narrowed to BoundingBox here
+	const isValid: boolean = validateBoundingBox(
+		bbox,
+	);
+
+	if (
+		isValid === false
+	) {
+		const invalidBboxError: Error = new Error(
+			"Invalid bounding box: coordinates are out of bounds or malformed.",
+		);
+		throw invalidBboxError;
+	}
+
+	return bbox;
+}
+```
+
+
+## Looping Constructs
+
+### Classical index `for` loops (and `while`)
+
+Prefer **`for` loops with an explicit initializer, condition, and update** (`for (let index = …; …; …)`) for counted iteration, instead of **`for…of`**, **`for…in`** as an array walker, or **`.map` / `.forEach` / `.filter`** when those methods exist only to visit each element (side effects or step-by-step `await`). **`while`** is permitted when loop control reads more clearly. **`while`** and **`do…while`** condition expressions follow **Boolean predicates (all conditional uses)** in **Multiline Formatting** the same way **`if`** does.
+
+For example:
+
+```ts
+// file: `./src/types/vroom/vroom-day-types.ts`
+export interface VroomDayParam {
+	time_window: number[];
+	max_places: number;
+	max_travel_time: number;
+}
+
+// file: `./src/config/vroom/display.ts`
+export const DISPLAY_INDEX_BASELINE: number = 1;
+
+// file: `./src/routing/example-vroom-batch.ts`
+import type {
+	VroomDayParam,
+	VroomVehicle,
+} from "@types/vroom/vroom-day-types";
+
+import {
+	DISPLAY_INDEX_BASELINE,
+} from "@config/vroom/display";
+
+
+for (
+	let vehicleIndex: number = 0;
+	vehicleIndex < vehiclesLength;
+	vehicleIndex++
+) {
+	const daysParam: VroomDayParam = daysParams[vehicleIndex];
+	const {
+		time_window,
+		max_places,
+		max_travel_time,
+	}: VroomDayParam = daysParam;
+
+	const vehicle: VroomVehicle = getVroomVehicle({
+		id: (vehicleIndex + DISPLAY_INDEX_BASELINE),
+		profile,
+		description: (vehicleIndex + DISPLAY_INDEX_BASELINE).toString(),
+		start_index: 0,
+		end_index: 0,
+		time_window,
+		max_tasks: max_places,
+		max_travel_time,
+	});
+
+	vehicles.push(vehicle);
+}
+```
+
+## Function Declarations
+
+### Named functions at module scope; no nested declarations
+
+- **Always** write durable, reusable behavior with **`function`** or **`async function`** (**named functions**) at **module scope** (or in another **`*.ts`** file), including helpers and module-private routines. **Do not** bind the module's main routines as **`const fn = (`…`) => …`** when a **`function`** declaration would work.
+- **Never** write a **`function`** or **`async function`** nested **inside another function's body** (no inner **`function`** declarations and no **`const inner = function …`** inside a routine). Move the callee to **module scope** (typically **below** callers per **Files Structure - Function flow and ordering**) or **`import`** it. **`class`** methods remain valid for object-oriented APIs.
+- **Callbacks are allowed**: Creating and **passing** an **arrow** or **anonymous function expression** **to an API** that expects a callback or iterator body (**`Promise`**, **`array.map`**, **`addEventListener`**, **`setTimeout`**, and similar) **is fine**. Those expressions **must not** replace a **`function`** that should live at module scope for clarity, reuse, or stack traces.
+- **Extract when logic repeats**: if the same logical step appears in a second place anywhere in the codebase, extract it as a named module-scope function before writing it again. See **Extract Repeated Logic** in **Module Design**.
+
+Named functions yield clearer stacks and searchable symbols:
+```ts
+import type {
+	FetchDataBody,
+	RowsByIdMapSerialized,
+} from "@types/sql/fetch-data-body-types";
+
+// file: `./src/handlers/sql/handle-fetch-data-request-v04.ts`
+async function handleFetchDataRequestV04(
+	body: FetchDataBody,
+): Promise<RowsByIdMapSerialized> {
+
+	const {
+		databaseName,
+		schemaName,
+		tableName,
+		fetchColumns,
+		bbox,
+		orderBy,
+		limit,
+	} = body;
+
+	// ... remainder follows Function Structure (Data / Operation / Return)
+}
+```
+
+### Function Structure
+
+Structure every **`function`** body as **three vertical bands** (**Data - Operation - Return**):
+
+1. **Data layer** - gather everything the routine needs **before** heavy logic runs:
+	1. **Parameter unpacking** (**destructuring**, defaults, typed bindings referencing shapes under **`./src/types/**`).
+	2. **Guards**, **cheap validation**, **`const`** seeds, and **short** delegated calls meant to **normalize inputs** (**push** fuller workflows into the Operation layer below).
+2. **Operation layer** - **business logic**, **mutations**, **branching**, **non-trivial delegated calls**.
+	1. **Internal computations** (boolean combinators obey **Multiline Formatting**).
+	2. **Calls into other named functions** (imported helpers or file-local helpers declared **lower** per **Files Structure**).
+3. **Return** - **multiple `return` statements are allowed** (early exits, **`switch`** branches, guards). Each **`return`** must pass **a single identifier** (a **`const`**, **`let`**, or parameter name) that already holds the outgoing value (**Return defined variables**). **Do not** **`return` a composite expression**: no direct **`return`** of calls, **`await`**, arithmetic, **`&&` / `||`** stacks, object/array literals, template literals, or ternaries (**bind** the result first, then **`return`** the binding). The same rule applies to **`throw`**: **`throw` only** an identifier bound to an **`Error`** (or rethrow a bound variable). **Always** assign **`new Error(…)`** (including with a **`cause`**) to a **`const`** first, then **`throw`** that identifier (see **Error handling with `try…catch`**).
+
+Example (**imports** **`@config`**, **`@types`**, and a named **`areAllValuesNumbers`** helper):
+
+```ts
+// file: `./src/gis-validation/validate-bounding-box.ts`
+
+import {
+	MIN_LATITUDE,
+	MAX_LATITUDE,
+	MIN_LONGITUDE,
+	MAX_LONGITUDE,
+} from "@config/gis/coordinates";
+
+import {
+	BBOX_REQUIRED_LENGTH,
+} from "@config/gis/bbox";
+
+import type {
+	BoundingBox,
+} from "@types/gis/bbox";
+
+import {
+	areAllValuesNumbers,
+} from "@gis-validation/bbox-helpers";
+
+function validateBoundingBox(
+	bbox: BoundingBox,
+): boolean {
+	// Data layer start
+	// 1. Destructure parameters
+	const [
+		minLon,
+		minLat,
+		maxLon,
+		maxLat,
+	]: BoundingBox = bbox;
+
+	// 2. Data validation / lightweight checks on prepared values
+	const isArrayLengthValid: boolean = (
+		bbox.length === BBOX_REQUIRED_LENGTH
+	);
+	// Data layer end
+
+	// Operation layer start
+	const areAllNumbers: boolean = areAllValuesNumbers(
+		bbox,
+	);
+	const areCoordinatesInBounds: boolean = (
+		minLat >= MIN_LATITUDE
+		&& maxLat <= MAX_LATITUDE
+		&& minLon >= MIN_LONGITUDE
+		&& maxLon <= MAX_LONGITUDE
+		&& minLat < maxLat
+		&& minLon < maxLon
+	);
+
+	const isValid: boolean = (
+		isArrayLengthValid
+		&& areAllNumbers
+		&& areCoordinatesInBounds
+	);
+	// Operation layer end
+
+	// Return
+	return isValid;
+}
+```
+
+### Prefer object parameters
+
+Pass several related inputs as **one object** annotated with **`interface`/`type`** declared under **`./src/types/**`** (see **Types and interfaces architecture**). The split below mirrors production layout.
+
+```ts
+// file: ./src/types/db/concurrency-batch-types.ts (exports params plus output discriminator)
+export type OutputType =
+	| "array"
+	| "record";
+
+export interface ConcurrencyDbQueriesParams {
+	rowsArrayToBatch: unknown[];
+	batchSize?: number;
+	batchName: string;
+	functionCallParams: Record<string, unknown>;
+	functionCallBatch: Function;
+	maxConcurrentProcesses: number;
+	outputType?: OutputType;
+}
+
+// file: ./src/config/db/concurrency-defaults.ts (imports discriminator type annotations)
+import type {
+	OutputType,
+} from "@types/db/concurrency-batch-types";
+
+export const DEFAULT_CONCURRENCY_BATCH_SIZE: number = 1;
+export const DEFAULT_CONCURRENCY_OUTPUT_TYPE: OutputType = "array";
+
+// file: ./src/db/example-concurrency.ts (consumer)
+import type {
+	ConcurrencyDbQueriesParams,
+} from "@types/db/concurrency-batch-types";
+
+import {
+	DEFAULT_CONCURRENCY_BATCH_SIZE,
+	DEFAULT_CONCURRENCY_OUTPUT_TYPE,
+} from "@config/db/concurrency-defaults";
+
+
+async function concurrencyDbQueries(
+	params: ConcurrencyDbQueriesParams,
+): Promise<unknown[] | Record<string, unknown>> {
+	const {
+		rowsArrayToBatch,
+		batchSize = DEFAULT_CONCURRENCY_BATCH_SIZE,
+		batchName,
+		functionCallParams,
+		functionCallBatch,
+		maxConcurrentProcesses,
+		outputType = DEFAULT_CONCURRENCY_OUTPUT_TYPE,
+	}: ConcurrencyDbQueriesParams = params;
+
+	// ... remainder follows Function Structure
+}
+```
+
+### Return defined variables
+
+**Every `return`** names **one identifier** after **`const`/`let`** assignment (**Function Structure**). **Never `return expression`** (including **`return await fetch(…)`**, **`return foo()`**, **`return a + b`**, or **`return condition ? x : y`**). **Early exits** and **`switch`** branches may **`return`** different identifiers at different sites as long as each **`return`** uses this form. **Every `throw`** follows the same rule: **`throw` only** a **`const`-bound `Error` identifier** (never **`throw new Error(…)`** inline). See **Error handling with `try…catch`**.
+
+## Asynchronous Programming
+
+### Use `async` and `await`
+
+**Never** use `.then()` or raw callbacks.
+The `async`/`await` syntax keeps your code clean and easy to follow:
+
+**Callee-owned normalization:** Prefer **not** mutating objects taken from **`params`** (defaults, stringify body, augment headers). **`fetchRequest`** **shallow-copies** **`requestParams`** first so the caller retains the original **`RequestParams`** object. Reserve in-place mutation for APIs that deliberately pass **mutable accumulator** buckets (fields documented as out-parameters), such as appending to **`clauseBucket`** in **`buildWhereValuesClause`** below.
+
+```ts
+// file: ./src/types/http/fetch-request-types.ts (exports wrapper + mirrored request knobs)
+export interface RequestParams {
+	method: string;
+	headers?: HeadersInit;
+	queryParams?: Record<string, unknown>;
+	body?: unknown;
+}
+
+export interface FetchRequestParams {
+	url: string;
+	requestParams: RequestParams;
+}
+
+// file: ./src/http/fetch-request.ts (consumer)
+import type {
+	FetchRequestParams,
+	RequestParams,
+} from "@types/http/fetch-request-types";
+
+async function fetchRequest(
+	params: FetchRequestParams,
+): Promise<Record<string, unknown>> {
+	let url: string = params.url;
+
+	const {
+		requestParams: requestParamsFromCaller,
+	}: FetchRequestParams = params;
+
+	const requestParamsForFetch: RequestParams = {
+		...requestParamsFromCaller,
+	};
+
+	// Ensure headers has a default value if null or undefined (on the copy only)
+	requestParamsForFetch.headers = requestParamsForFetch.headers ?? {
+		"Content-Type": "application/json",
+	};
+
+	if (
+		requestParamsForFetch.body !== undefined
+		&& requestParamsForFetch.body !== null
+	) {
+		requestParamsForFetch.body = JSON.stringify(requestParamsForFetch.body);
+	}
+
+	if (
+		requestParamsForFetch.queryParams !== undefined
+		&& requestParamsForFetch.queryParams !== null
+	) {
+		const queryParams: string = new URLSearchParams(
+			requestParamsForFetch.queryParams as Record<string, string>,
+		).toString();
+
+		url = `${url}?${queryParams}`;
+	}
+
+	const response: Response = await fetch(
+		url,
+		requestParamsForFetch as RequestInit,
+	);
+
+	const body: Record<string, unknown> = (
+		await response.json()
+	) as Record<string, unknown>;
+
+	return body;
+}
+```
+
+**Intentional mutation (out-parameter):** When the contract is to **append** into a caller-provided collection, mutate **only** the documented field (`clauseBucket` here), not unrelated shared state:
+
+```ts
+// file: ./src/types/sql/where-values-clause-types.ts
+export type SqlQuery = unknown;
+
+export type SqlTag = (
+	strings: TemplateStringsArray,
+	...values: unknown[]
+) => SqlQuery;
+
+export interface WhereClauseBuilderDbAdapter {
+	sql: SqlTag;
+}
+
+export interface WhereClauseBuilderState {
+	dbAdapter: WhereClauseBuilderDbAdapter;
+}
+
+export type WhereConditionValue =
+	| string
+	| number
+	| "IS NULL"
+	| "IS NOT NULL";
+
+export interface WhereValuesClause {
+	state: WhereClauseBuilderState;
+	columnNameSql: SqlQuery;
+	whereValue: WhereConditionValue;
+	columnIsArray?: boolean;
+	clauseBucket: SqlQuery[];
+}
+
+// file: ./src/sql-builder/build-where-values-clause.ts
+import type {
+	SqlTag,
+	SqlQuery,
+	WhereClauseBuilderState,
+	WhereConditionValue,
+	WhereValuesClause,
+} from "@types/sql/where-values-clause-types";
+
+/**
+ * Handles special sentinel strings like "IS NULL" and scalar equality.
+ *
+ * @param {Object} params - The parameters object.
+ * @param {WhereClauseBuilderState} params.state - Mutable builder state.
+ * @param {SqlQuery} params.columnNameSql - The escaped column name fragment.
+ * @param {WhereConditionValue} params.whereValue - The sentinel or scalar for the predicate.
+ * @param {SqlQuery[]} params.clauseBucket - The bucket to add the clause to (mutated).
+ * @returns {void}
+ */
+function buildWhereValuesClause(
+	params: WhereValuesClause,
+): void {
+	const {
+		state,
+		columnNameSql,
+		whereValue,
+		columnIsArray = false,
+		clauseBucket,
+	}: WhereValuesClause = params;
+
+	const {
+		dbAdapter,
+	}: WhereClauseBuilderState = state;
+	const {
+		sql,
+	}: {
+		sql: SqlTag;
+	} = dbAdapter;
+
+	let clause: SqlQuery | undefined;
+
+	if (
+		whereValue === "IS NULL"
+	) {
+		clause = sql`${columnNameSql} IS NULL`;
+	} else if (
+		whereValue === "IS NOT NULL"
+	) {
+		clause = sql`${columnNameSql} IS NOT NULL`;
+	} else if (
+		columnIsArray === false
+	) {
+		clause = sql`${columnNameSql} = ${whereValue}`;
+	}
+
+	if (
+		clause !== undefined
+	) {
+		clauseBucket.push(clause);
+	}
+}
+```
+
+### Error handling with `try...catch`
+
+Wrap potentially failing operations in `try...catch` blocks. Follow **Function Structure**: **never** inline **`new Error(…)`** at **`throw`**-assign to a **`const`**, then **`throw`** that name (including the **`default`** branch of a **`switch`** and **`catch`** rewraps with **`cause`**).
+
+```ts
+// file: ./src/types/dynamic-sql/demo-db-fetch-try-flow-types.ts
+import type {
+	DbFetchDataReturnType,
+} from "@types/dynamic-sql/db-fetch-rows";
+
+export interface DemoDbFetchTryFlowParams {
+	dbAdapter: unknown;
+	fetchColumnsParams: unknown;
+	columnsSchema: unknown;
+	bbox: unknown;
+	orderByParams: unknown;
+	limitParams: unknown;
+	schemaName: string;
+	tableName: string;
+	returnType: DbFetchDataReturnType;
+}
+
+// file: `./src/handlers/demo-db-fetch-try-flow.ts`
+// Add imports for `DbFetchDataRows`, `QueryFragments`, `SqlQuery`, `SqlRows`, row shapes, converters,
+// `buildQueryFragments`, `buildSelectQuery`, and your tagged `sql` executor from `./src/types/**`,
+// `./src/config/**`, and sibling modules-the same way as a full fetch handler (see **Object Destructuring**).
+
+import type {
+	DbFetchDataRows,
+} from "@types/dynamic-sql/db-fetch-rows";
+
+import type {
+	DemoDbFetchTryFlowParams,
+} from "@types/dynamic-sql/demo-db-fetch-try-flow-types";
+
+async function demoDbFetchTryFlow(
+	params: DemoDbFetchTryFlowParams,
+): Promise<DbFetchDataRows> {
+	const {
+		dbAdapter,
+		fetchColumnsParams,
+		columnsSchema,
+		bbox,
+		orderByParams,
+		limitParams,
+		schemaName,
+		tableName,
+		returnType,
+	} = params;
+
+	try {
+		const queryFragments: QueryFragments = buildQueryFragments({
+			dbAdapter,
+			fetchColumnsParams,
+			columnsSchema,
+			bbox,
+			orderByParams,
+			limitParams,
+		});
+
+		const selectQuery: SqlQuery = buildSelectQuery({
+			dbAdapter,
+			schemaName,
+			tableName,
+			fragments: queryFragments,
+		});
+
+		const rows: SqlRows = await sql`${selectQuery}`;
+
+		const rowsArray: RowsArray = rows.values()
+			.toArray() as RowsArray;
+
+		switch (returnType) {
+			case "mapSerialized": {
+				const rowsByIdMapSerialized: RowsByIdMapSerialized = convertRowsToMapIdSerialized(
+					rowsArray,
+				);
+				return rowsByIdMapSerialized;
+			}
+			case "map": {
+				const rowsByIdMap: RowsByIdMap = convertRowsToMapId(
+					rowsArray,
+				);
+				return rowsByIdMap;
+			}
+			case "array": {
+				return rowsArray;
+			}
+			case "object": {
+				const rowsById: RowsById = convertRowsToObjectId(
+					rowsArray,
+				);
+				return rowsById;
+			}
+			default: {
+				const unknownReturnTypeError: Error = new Error(
+					"Unknown Return Type for Rows",
+				);
+				throw unknownReturnTypeError;
+			}
+		}
+	} catch (error) {
+		const cause: Error = (
+			error instanceof Error
+				? error
+				: new Error(String(error))
+		);
+		const fetchRowsError: Error = new Error(
+			`Error fetching rows from ${tableName}`,
+			{
+				cause,
+			},
+		);
+		throw fetchRowsError;
+	}
+}
+```
+
+### Parallel Asynchronous Operations
+```ts
+let promises: Array<Promise<string>> = [];
+
+for (
+	let categoryIndex: number = 0;
+	categoryIndex < categories.length;
+	categoryIndex++
+) {
+	const category: string = categories[categoryIndex];
+	// Collect promises without awaiting
+	const promise: Promise<string> = getCategoryData(
+		category,
+	);
+	promises.push(promise);
+}
+
+const results: string[] = await Promise.all(promises);
+```
+
+### Sequential asynchronous operations
+```ts
+// file: ./src/types/migrations/db-migrations-types.ts
+export type DbMigration = [
+	string,
+	string,
+];
+
+// file: ./src/config/migrations/load-order.ts (exports authoritative directory segments + semver tags)
+export const DB_MIGRATIONS_PATH_DIR: string = "/path/sql";
+export const DB_MIGRATIONS_VERSIONS: string[] = [
+	"001",
+];
+
+// file: ./src/migrations/set-migrations-example.ts (imports tuples + literals)
+import type {
+	DbMigration,
+} from "@types/migrations/db-migrations-types";
+
+import {
+	DB_MIGRATIONS_PATH_DIR,
+	DB_MIGRATIONS_VERSIONS,
+} from "@config/migrations/load-order";
+
+
+async function setMigrations(
+): Promise<void> {
+	const dbMigrations: DbMigration[] = [];
+
+	for (
+		let versionIndex: number = 0;
+		versionIndex < DB_MIGRATIONS_VERSIONS.length;
+		versionIndex++
+	) {
+		const version: string = DB_MIGRATIONS_VERSIONS[versionIndex];
+		const filePath: string = `${DB_MIGRATIONS_PATH_DIR}/${version}.sql`;
+
+		const versionMigration: string = await loadTxt({
+			filePath,
+		});
+
+		const dbMigration: DbMigration = [version, versionMigration];
+		dbMigrations.push(dbMigration);
+	}
+}
+```
+
+### Avoiding Callback Hell
+
+Organize code into smaller asynchronous functions and use `async/await` throughout. This prevents deeply nested callbacks:
+```ts
+import {
+	setTimeout,
+} from "node:timers/promises";
+
+// file: ./src/config/network/fetch-timeouts.ts
+export const DEFAULT_FETCH_TIMEOUT_MS: number = 500;
+export const TIMEOUT_RESULT_SIGNAL_CODE: number = 1;
+
+// file: ./src/types/network/timeout-fetch-types.ts
+export interface TimeoutResult {
+	code: number;
+	message: string;
+}
+
+export interface TimeoutHandleParams {
+	timeout: number;
+}
+
+export interface FetchWithTimeoutParams {
+	url: string;
+	timeout?: number;
+}
+
+// file: `./src/network/fetch-with-timeout.ts`
+import type {
+	FetchWithTimeoutParams,
+	TimeoutHandleParams,
+	TimeoutResult,
+} from "@types/network/timeout-fetch-types";
+
+import {
+	DEFAULT_FETCH_TIMEOUT_MS,
+	TIMEOUT_RESULT_SIGNAL_CODE,
+} from "@config/network/fetch-timeouts";
+
+/**
+ * Completes after a specified timeout with a TimeoutResult payload.
+ */
+async function timeoutHandle(
+	params: TimeoutHandleParams,
+): Promise<TimeoutResult> {
+	const {
+		timeout,
+	}: TimeoutHandleParams = params;
+
+	await setTimeout(
+		timeout,
+		undefined,
+		{
+			signal: undefined,
+		},
+	);
+	const timeoutReached: TimeoutResult = {
+		code: TIMEOUT_RESULT_SIGNAL_CODE,
+		message: "Request timed out",
+	};
+	return timeoutReached;
+}
+
+
+/**
+ * Fetch with a timeout using Promise.race.
+ */
+async function fetchWithTimeout(
+	params: FetchWithTimeoutParams,
+): Promise<Response | TimeoutResult> {
+	const {
+		url,
+		timeout = DEFAULT_FETCH_TIMEOUT_MS,
+	}: FetchWithTimeoutParams = params;
+	const timeoutPromise: Promise<TimeoutResult> = timeoutHandle({
+		timeout,
+	});
+	const fetchPromise: Promise<Response> = fetch(
+		url,
+	);
+
+	const result: Response | TimeoutResult = await Promise.race([
+		fetchPromise,
+		timeoutPromise,
+	]);
+	return result;
+}
+```
+
+---
+
+## Post-edit validation
+
+After creating or modifying any `.ts`, `.tsx`, `.mts`, or `.cts` file, agents **must** validate before considering the task complete. **Never** hand off work with ESLint or TypeScript errors.
+
+### Workflow
+
+1. **Collect `CHANGED_PATHS`** - Every file the agent created or modified in the current task. List paths relative to the repository root, space-separated.
+
+2. **ESLint with auto-fix** - Scope to changed paths only. Do not manually fix import order or other ESLint-fixable violations:
+
+```bash
+npx eslint --fix CHANGED_PATHS
+```
+
+Per file (equivalent):
+
+```bash
+npx eslint PATH_FILE --fix
+```
+
+Example with multiple files:
+
+```bash
+npx eslint --fix src/handlers/foo.ts src/components/Bar/Bar.tsx
+```
+
+3. **TypeScript typecheck** - Run without emit on the **project**, not on individual file paths. Passing paths to `tsc` ignores `tsconfig.json` (path aliases, `strict`, and other options will not apply):
+
+```bash
+npx tsc --noEmit
+```
+
+When the project uses a non-default TypeScript config:
+
+```bash
+npx tsc --noEmit -p path/to/tsconfig.json
+```
+
+4. **Fix and re-run** - If either command reports errors, fix the code and repeat steps 2 and 3 until both exit successfully.
+
+## Code Documentation
+
+### Comments and Documentation (JSDoc)
+
+**Inline comments** (`//`) inside function bodies follow two rules:
+
+**Explain non-obvious intent, trade-offs, or constraints** that the code cannot convey by itself. Examples of valid comments:
+- `// RLS: user_id filter is enforced inside the DB function; do not add a WHERE clause here`
+- `// Shallow-copy before mutating so the caller retains the original RequestParams object`
+- `// Collect promises without awaiting - all queries run concurrently`
+
+**`/* */` block comments**: use only to temporarily disable code during debugging. Never commit them.
+
+**JSDoc** (the `/** ... */` block placed directly above a function declaration):
+
+- Write JSDoc above every **exported** function.
+- Write JSDoc above any module-private function whose **behavior**, **preconditions**, **side effects**, or **`throw` contract** are non-obvious from the name and parameter types alone.
+- Omit JSDoc for trivial private helpers where the name and types fully communicate the contract (for example `function clampToZero(value: number): number`).
+- Use `@param`, `@returns`, and `@throws` tags. For object-parameter functions, document each field as `@param {Type} params.field - description`.
+- `@async` is redundant on an `async function` declaration; omit it unless the toolchain requires it.
+
+Provide JSDoc for functions where parameters are numerous or the behavior is non-obvious:
+```ts
+// file `./src/types/dynamic-data-definition/get-table-ddl-types.ts`
+export interface GetTableDDLParams {
+	sql: Sql;
+	identifier: TableIdentifier;
+}
+
+// file `./src/dynamic-data-definition/get-table-ddl.ts`
+import type {
+	ColumnInfo,
+	ConstraintInfo,
+	IndexInfo,
+} from "@types/dynamic-data-definition/catalog-rows";
+
+import type {
+	GetTableDDLParams,
+} from "@types/dynamic-data-definition/get-table-ddl-types";
+
+/**
+ * Orchestrates the entire metadata extraction workflow and returns a fully
+ * formatted PostgreSQL DDL script that can recreate the table, its
+ * constraints, and any **stand-alone** indexes (i.e. indexes that are **not**
+ * automatically generated by `PRIMARY KEY` or `UNIQUE` constraints).
+ *
+ * The function performs three I/O-bound catalog queries in parallel:
+ * 1. `getColumnDetails` for column definitions.
+ * 2. `getConstraintDetails` for table constraints.
+ * 3. `getIndexDetails` for indexes (filtered afterwards).
+ *
+ * Once all promises resolve, the structured metadata is handed to
+ * `buildDDL`, which assembles a human-readable, multi-line script:
+ *
+ * ```sql
+ * CREATE TABLE IF NOT EXISTS "schema"."table" (
+ * ...column clauses...
+ * ) TABLESPACE pg_default;
+ * ALTER TABLE … ADD CONSTRAINT …;
+ * CREATE INDEX IF NOT EXISTS …;
+ * ```
+ *
+ * @async
+ * @param {Object} params - Function parameters.
+ * @param {Sql} params.sql - Tagged-template query executor
+ * (compatible with `postgres`-style libraries). Used to run the
+ * catalog queries with automatic value binding.
+ * @param {TableIdentifier} params.identifier - The `{ schema, table }`
+ * tuple identifying the target table.
+ *
+ * @returns {Promise<string>} - Resolves to a complete, ready-to-run DDL
+ * script. The string is **never** empty; if the table does not exist the
+ * script will still contain a `CREATE TABLE IF NOT EXISTS …` stub.
+ *
+ * @throws {Error} - Rethrows any error originating from the underlying
+ * database driver or from unexpected processing issues (e.g. malformed
+ * catalog rows).
+ */
+async function getTableDDL(
+	params: GetTableDDLParams,
+): Promise<string> {
+	const {
+		sql,
+		identifier,
+	}: GetTableDDLParams = params;
+	// Gather catalog look-ups in parallel
+	const promises: Array<Promise<unknown>> = [];
+
+	const columnInfoPromise: Promise<ColumnInfo[]> = getColumnDetails({
+		sql,
+		identifier,
+	});
+	promises.push(columnInfoPromise);
+
+	const constraintInfoPromise: Promise<ConstraintInfo[]> = getConstraintDetails({
+		sql,
+		identifier,
+	});
+	promises.push(constraintInfoPromise);
+
+	const [
+		columns,
+		constraints,
+	]: [
+		ColumnInfo[],
+		ConstraintInfo[],
+	] = await Promise.all(promises);
+
+	// Constraint names needed to filter out PK/UNIQUE-backed indexes
+	const constraintNames: string[] = [];
+
+	for (
+		let constraintIndex: number = 0;
+		constraintIndex < constraints.length;
+		constraintIndex++
+	) {
+		const constraint: ConstraintInfo = constraints[constraintIndex];
+		constraintNames.push(constraint.conname);
+	}
+
+	const indexes: IndexInfo[] = await getIndexDetails({
+		sql,
+		identifier,
+		constraintNames,
+	});
+
+	const ddl: string = buildDDL({
+		columns,
+		constraints,
+		indexes,
+		identifier,
+	});
+
+	return ddl;
+}
+```
+
+---
+
+## Summary
+
+Write TypeScript code strictly adhering to the following rules:
+
+**Formatting**
+Use 1 tab per indent level. Use double quotes for string literals; use template literals only for interpolation or multi-line strings. Never use single quotes. Terminate all statements with semicolons. Always use plain hyphen-minus (`-`); never use en dash or em dash. Keep every named function or method at most 100 physical lines; split it when it would exceed the limit.
+
+**Trailing commas and separators**
+On any multiline array literal, object literal, or call-site argument list, always include a trailing comma after the last item. On formal parameter lists, always include a trailing comma after the last parameter even on a single physical line (e.g. `function foo(bar: Baz,)`); omit only for empty parameter lists. Use commas to separate runtime lists (parameters, arguments, destructuring bindings, array/object elements). Use semicolons to separate members inside `interface` bodies and inline object types.
+
+**Naming**
+Use `camelCase` for variables, functions, and parameters. Use `UPPER_CASE` for hardcoded configuration literals (`const` bindings whose values are fixed literals: timeouts, limits, HTTP methods, status codes, path segments, feature flags) and for shared reusable Tailwind class name strings. Use `PascalCase` for classes, interfaces, and type aliases. Never prefix interfaces with `I`. Use `snake_case` bindings only when mirroring external schemas (REST/JSON payloads, database rows, vendor SDKs).
+
+**Named constants - no magic numbers**
+Never use a bare numeric literal directly in an expression. Always assign it to a named `UPPER_CASE` `const` first, then reference that binding in expressions. Exception: obvious pure-bookkeeping indices such as `index + 1`.
+
+**Multiline formatting**
+Always put one element per physical line in multiline array literals, object literals, and parameter lists. Always put one operand or sub-condition per physical line in every compound boolean predicate (`&&`, `||`) - applies to `if`, `while`, `do…while`, `for` conditions, ternary conditions, `const`/`let` boolean bindings, `return`, and `throw`. Always put one clause per physical line in `for` loop headers (initializer, condition, update). For non-empty function signatures, put each parameter on its own line, close with `): ReturnType {` on its own line. Always expand inline object type annotations (`{ … }`) across multiple lines with each `member: Type;` on its own line.
+
+**Variables**
+Never use `var`. Use `const` by default; use `let` only when a binding must be reassigned. Use `const` for destructuring patterns where no binding will be reassigned; use `let` when any binding from the pattern needs reassignment.
+
+**Modules and imports**
+Always use ES6 `import` / `export`. Never use CommonJS (`require`, `module.exports`, `exports`). Always use `import type { … }` for compile-time-only types. Always use `@`-prefixed path aliases for internal imports (e.g. `@types/…`, `@config/…`, `@classNames/…`); never use relative ascending paths (`../`, `../../`). Register every alias in `compilerOptions.paths`. Do not manually reorder imports - run `npx eslint PATH_FILE --fix` (or `npx eslint --fix PATH1 PATH2` for multiple files). Prefer named exports; use `export default` only when a framework requires it (Next.js pages, layouts, route handlers). Handler and service modules: bottom `export { … }` block or inline exports at declaration - one style per file, no mixing. Framework entry files (`page.tsx`, `layout.tsx`, `route.ts`, etc.): inline `export const revalidate`, `export async function generateMetadata`, and `export default` are required. Never create convenience barrel `index.ts` re-export files unless a package boundary requires a stable public API surface.
+
+**Post-edit validation**
+After creating or modifying any `.ts` / `.tsx` file, agents must run `npx eslint --fix CHANGED_PATHS` on every changed path (or `npx eslint PATH_FILE --fix` per file), then `npx tsc --noEmit` on the project (not file paths - that ignores `tsconfig.json`). Use `-p path/to/tsconfig.json` when required. Fix all errors and re-run until both commands exit successfully. Never leave ESLint or TypeScript errors for the user.
+
+**Types**
+Declare all reusable `interface` and `type` alias shapes exclusively under `./src/types/**/*.ts`; import them via `@types/…`. For React component types (`./src/types/components/**`), files are generalized per feature group - create one type file per feature group, not per component, using `PascalCase` directories and the `<FeatureGroup>-types.ts` naming pattern (e.g., `./src/types/components/UserProfile/UserProfile-types.ts`). Always write explicit `: string`, `: number`, or `: boolean` annotations on function parameters, locals, and `const`/`let` bindings - never rely on inference for primitives. Always annotate array bindings with an explicit element type (`T[]` or `Array<T>`). Prefer `interface` for reusable object shapes; use `type` when `interface` cannot express the shape (unions, discriminated unions, tuples, mapped types, conditional types). Never use `any`; use `unknown` for values not known statically, then narrow with type guards or schema validators immediately after ingestion. Always enable strict null checks and guard against `null` and `undefined` explicitly. Use string literal union types for bounded domains.
+
+**Config files**
+Declare all static behavioral configuration literals exclusively under `./src/config/**/*.ts`; import them via `@config/…`. For React component config (`./src/config/components/**`), files are generalized per feature group - create one config file per feature group, not per component, using `PascalCase` directories and the `<FeatureGroup>-config.ts` naming pattern (e.g., `./src/config/components/UserProfile/UserProfile-config.ts`). Never scatter `export const SOME_LITERAL = …` across services, handlers, or other files outside `./src/config/**`. Config is not content (rendered strings belong in `./src/content/**`); config is not state logic (reducers and state builders belong in `./src/states/**`); config is not presentation styling (Tailwind classes belong in `./src/styles/classNames/**`).
+
+**User-facing content**
+Declare all hardcoded static values that render as user-visible output - labels, headings, button text, descriptions, empty-state messages, nav text - exclusively under `./src/content/**/*.ts`; import them via `@content/…`. For React components, files are generalized per feature group - create one content file per feature group, not per component, using `PascalCase` directories and the `<FeatureGroup>-content.ts` naming pattern (e.g., `./src/content/Counter/Counter-content.ts`). Register `"@content/*": ["src/content/*"]` in `compilerOptions.paths`. Never inline these strings in source files or in config files.
+
+**Pure state logic**
+Declare all pure state transition functions - reducers, state factories, action builders, initial state builders, derived selectors, reset helpers - exclusively under `./src/states/**/*.ts`; import them via `@states/…`. For React components, files are generalized per feature group - create one state file per feature group, not per component, using `PascalCase` directories and the `<FeatureGroup>-state.ts` naming pattern (e.g., `./src/states/Counter/Counter-state.ts`). Register `"@states/*": ["src/states/*"]` in `compilerOptions.paths`. Never place JSX, React Hooks, or Context creation in state files.
+
+**Module design**
+Every `*.ts` / `*.tsx` module owns exactly one primary concern: fetch/transport, validate, transform/map, orchestrate, configure, define types, pure state transition logic, user-facing static content, UI view component, or reusable styling strings. Never mix concern types in one file. Name each file after its single concern. Never write HTTP I/O inside a validator or transformer. Never embed domain validation inside a fetch function. When the same logical step appears in two or more places, extract it once as a named function before writing it a second time - never paste duplicate blocks. For UI view components, each `.tsx` file declares and exports exactly one React component; a List component and its Item component are always split into separate files residing together in the same PascalCase feature directory (e.g., `ComponentNameList.tsx` and `ComponentName.tsx` under `./src/components/ComponentName/`). Reusable Tailwind class strings live exclusively under `./src/styles/classNames/**/*.ts`, are named in `PascalCase` matching the component or feature group with a `-classNames` suffix (e.g., `Button-classNames.ts`), and are imported via `@classNames/…`; single-use strings may remain inline in JSX.
+
+**Conditionals**
+Always use strict equality (`===` and `!==`). Never use loose equality (`==` or `!=`). In `switch` statements, always wrap each `case` body in `{ }` braces, always include a `default` branch that throws a named `Error`, and never fall through from one `case` to the next. Use a ternary only when both branches are single tokens, the result is assigned to a named binding, and the expression is not nested inside another ternary - never use a ternary as a statement. Use early-return guard clauses at the start of a function body to reject invalid inputs before business logic runs.
+
+**Loops**
+Always use `for` loops with an explicit initializer, condition, and update for counted iteration. `while` is permitted when loop control reads more clearly. Never use `for…of`, `for…in` as an array walker, or `.map` / `.forEach` / `.filter` for iteration over a collection.
+
+**Functions**
+Always write reusable behavior as named `function` or `async function` declarations at module scope. Never write a `function` or `async function` nested inside another function's body - move callees to module scope (declared below their callers) or import them. Callbacks passed to APIs (e.g. `Promise`, `addEventListener`, `setTimeout`) may be arrow or anonymous functions. Always structure every function body as three vertical bands: Data layer (destructure params, guards, input normalization) → Operation layer (business logic, branching, delegated calls) → Return. Always pass multiple related inputs as a single object annotated with an `interface` or `type` alias. Every `return` must pass a single identifier that already holds the outgoing value - never return a composite expression, a call, `await`, arithmetic, `&&`/`||` stacks, object/array literals, template literals, or ternaries directly. Every `throw` must throw only a `const`-bound `Error` identifier - never `throw new Error(…)` inline. Order functions top-to-bottom from higher abstraction to lower; define each file-local callee below its first caller.
+
+**Asynchronous programming**
+Always use `async` and `await`. Never use `.then()` or raw callback functions. Wrap potentially failing operations in `try…catch`; always assign `new Error(…)` to a `const` first, then `throw` that identifier. For parallel async operations, collect promises in an array using a `for` loop without `await`, then resolve them all at once with `await Promise.all(promises)`. For sequential async operations, use a `for` loop with `await` inside the body.
+
+**Documentation**
+Write JSDoc (`/** … */`) above every exported function and above any module-private function whose behavior, preconditions, side effects, or `throw` contract are non-obvious from the name and types alone. Use `@param`, `@returns`, and `@throws` tags; for object-parameter functions, document each field as `@param {Type} params.field`. Write inline comments (`//`) only to explain non-obvious intent, trade-offs, or constraints the code cannot convey by itself. Never commit `/* */` block comments.
