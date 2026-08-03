@@ -1,5 +1,5 @@
 import { getArticles, getFirstArticle } from "./services/the-lab-fetch";
-import type { PaginatedDocs } from "@app-types/payload";
+import type { PaginatedDocs } from "@test-types/payload";
 import type { Article } from "@/payload-types";
 
 export function processArticles(): void {

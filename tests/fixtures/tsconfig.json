@@ -10,7 +10,7 @@
 		"jsx": "react-jsx",
 		"paths": {
 			"@/*": ["./*"],
-			"@app-types/*": ["./types/*"],
+			"@test-types/*": ["./types/*"],
 			"@app-services/*": ["./services/*"]
 		}
 	},
