@@ -1,10 +1,6 @@
-
 import {
 	ESLintUtils,
 } from "@typescript-eslint/utils";
-
-
-
 
 import {
 	collectAllImportedNames,

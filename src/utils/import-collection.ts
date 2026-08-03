@@ -14,8 +14,6 @@ import type {
 	TSESTree,
 } from "@typescript-eslint/utils";
 
-
-
 /**
  * Collect existing type-import binding names already present in the file,
  * keyed by module specifier. This prevents the rule from emitting duplicate

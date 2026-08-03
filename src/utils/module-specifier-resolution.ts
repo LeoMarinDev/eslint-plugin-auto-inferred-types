@@ -5,7 +5,6 @@ import type {
 } from "@types-internal/utils/type-imports-types";
 import type ts from "typescript";
 
-
 /**
  * Path segment marking the boundary of a `node_modules` dependency tree.
  */

@@ -15,7 +15,6 @@ import type {
 	EnsureNamesSetParams,
 } from "@types-internal/utils/type-imports-types";
 
-
 /**
  * Resolve a set of type-identifier names to their source module specifiers
  * using the TypeScript program's type checker. Returns a map from module

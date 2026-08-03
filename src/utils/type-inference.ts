@@ -4,7 +4,6 @@ import {
 } from "@typescript-eslint/utils";
 import ts from "typescript";
 
-
 import {
 	resolveAliasedSymbol,
 } from "@utils/symbol-resolution";
@@ -19,8 +18,6 @@ import type {
 	ParserServicesWithTypeInformation,
 	TSESTree,
 } from "@typescript-eslint/utils";
-
-
 
 /**
  * Get the TypeScript-inferred type text for a node. This is the annotation

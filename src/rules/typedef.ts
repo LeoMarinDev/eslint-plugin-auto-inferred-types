@@ -3,7 +3,6 @@ import {
 	ESLintUtils,
 } from "@typescript-eslint/utils";
 
-
 import {
 	MAX_INFERRED_TYPE_LENGTH,
 } from "@config/rules/typedef-limits";
@@ -11,7 +10,6 @@ import {
 	DEFAULT_OPTIONS,
 	OPTION_KEYS,
 } from "@config/rules/typedef-options";
-
 
 import {
 	buildInferredTypeAnnotationFixes,
