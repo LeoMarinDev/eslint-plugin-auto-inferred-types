@@ -8,7 +8,9 @@ import type {
  *
  * Each flag toggles typedef enforcement for a specific syntactic position.
  * All flags default to `false`; the `recommended` config enables the ones
- * that match the plugin's intended behavior.
+ * that match the plugin's intended behavior. The `debug` flag is the only
+ * non-enforcement option: when `true` it emits structured diagnostics to
+ * `process.stderr` without altering any fixes.
  */
 export interface TypedefRuleOptions {
 	arrayDestructuring: boolean;
@@ -19,6 +21,7 @@ export interface TypedefRuleOptions {
 	propertyDeclaration: boolean;
 	variableDeclaration: boolean;
 	variableDeclarationIgnoreFunction: boolean;
+	debug: boolean;
 }
 
 /**

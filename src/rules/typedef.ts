@@ -56,6 +56,7 @@ const typedefRule = createRule({
 					[OPTION_KEYS.PropertyDeclaration]: { type: "boolean" },
 					[OPTION_KEYS.VariableDeclaration]: { type: "boolean" },
 					[OPTION_KEYS.VariableDeclarationIgnoreFunction]: { type: "boolean" },
+					[OPTION_KEYS.Debug]: { type: "boolean" },
 				},
 			},
 		],

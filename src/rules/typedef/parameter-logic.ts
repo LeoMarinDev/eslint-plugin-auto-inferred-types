@@ -6,6 +6,9 @@ import {
 	reportMissingAnnotation,
 } from "@rules/typedef/report";
 import {
+	logDebug,
+} from "@utils/debug-log";
+import {
 	getInferenceNodeForParameter,
 	getNodeName,
 } from "@utils/typedef-shared";
@@ -50,6 +53,15 @@ function checkParameters(
 		const hasTypeAnnotation: boolean = parameterHasTypeAnnotation(
 			annotationTarget,
 		);
+
+		logDebug({
+			enabled: ruleContext.options.debug,
+			label: "param-check",
+			detail: {
+				index: paramIndex,
+				hasAnnotation: hasTypeAnnotation,
+			},
+		});
 
 		if (
 			hasTypeAnnotation === true

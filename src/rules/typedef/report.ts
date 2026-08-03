@@ -6,6 +6,9 @@ import {
 } from "@config/rules/typedef-meta";
 
 import {
+	logDebug,
+} from "@utils/debug-log";
+import {
 	buildInferredTypeAnnotationFixes,
 } from "@utils/import-fix-builder";
 import {
@@ -79,6 +82,13 @@ function reportMissingAnnotation(
 			if (
 				resolved === undefined
 			) {
+				logDebug({
+					enabled: ruleContext.options.debug,
+					label: "skip-fix",
+					detail: {
+						reason: "no-inference-node",
+					},
+				});
 				const noFix = null;
 				return noFix;
 			}
@@ -93,6 +103,13 @@ function reportMissingAnnotation(
 				inferredFix === undefined
 				|| inferredFix.typeText.length > MAX_INFERRED_TYPE_LENGTH
 			) {
+				logDebug({
+					enabled: ruleContext.options.debug,
+					label: "skip-fix",
+					detail: {
+						reason: inferredFix === undefined ? "no-type-text" : "type-too-long",
+					},
+				});
 				const noFix = null;
 				return noFix;
 			}
@@ -111,6 +128,15 @@ function reportMissingAnnotation(
 			return fixes;
 		},
 	};
+
+	logDebug({
+		enabled: ruleContext.options.debug,
+		label: "report",
+		detail: {
+			nodeType: location.type,
+			name,
+		},
+	});
 
 	context.report(reportDescriptor);
 }

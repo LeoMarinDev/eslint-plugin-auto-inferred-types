@@ -16,6 +16,9 @@ import {
 	shouldSkipVariableDeclarator,
 } from "@rules/typedef/skip-predicates";
 import {
+	logDebug,
+} from "@utils/debug-log";
+import {
 	getNodeName,
 } from "@utils/typedef-shared";
 
@@ -48,6 +51,14 @@ function visitVariableDeclarator(
 		options,
 	}: TypedefRuleContext = ruleContext;
 
+	logDebug({
+		enabled: options.debug,
+		label: "visit",
+		detail: {
+			nodeType: node.type,
+		},
+	});
+
 	const shouldSkip: boolean = shouldSkipVariableDeclarator({
 		node,
 		variableDeclaration: options.variableDeclaration,
@@ -59,6 +70,14 @@ function visitVariableDeclarator(
 	if (
 		shouldSkip === true
 	) {
+		logDebug({
+			enabled: options.debug,
+			label: "skip",
+			detail: {
+				nodeType: node.type,
+				predicate: "shouldSkipVariableDeclarator",
+			},
+		});
 		return;
 	}
 
@@ -177,6 +196,14 @@ function visitPropertyDefinition(
 		options,
 	}: TypedefRuleContext = ruleContext;
 
+	logDebug({
+		enabled: options.debug,
+		label: "visit",
+		detail: {
+			nodeType: node.type,
+		},
+	});
+
 	const shouldSkip: boolean = shouldSkipPropertyDefinition({
 		node,
 		variableDeclarationIgnoreFunction: options.variableDeclarationIgnoreFunction,
@@ -185,6 +212,14 @@ function visitPropertyDefinition(
 	if (
 		shouldSkip === true
 	) {
+		logDebug({
+			enabled: options.debug,
+			label: "skip",
+			detail: {
+				nodeType: node.type,
+				predicate: "shouldSkipPropertyDefinition",
+			},
+		});
 		return;
 	}
 

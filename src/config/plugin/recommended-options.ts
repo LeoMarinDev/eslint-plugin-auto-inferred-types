@@ -29,4 +29,5 @@ export const RECOMMENDED_OPTIONS: TypedefRuleOptions = {
 	propertyDeclaration: true,
 	variableDeclaration: true,
 	variableDeclarationIgnoreFunction: false,
+	debug: false,
 };

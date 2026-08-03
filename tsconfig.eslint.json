@@ -1,0 +1,16 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"noEmit": true
+	},
+	"include": [
+		"src",
+		"tests/fixtures/**/*.ts",
+		"tests/fixtures/**/*.tsx"
+	],
+	"exclude": [
+		"node_modules",
+		"dist",
+		"build"
+	]
+}

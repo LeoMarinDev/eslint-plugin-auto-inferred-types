@@ -19,6 +19,7 @@ export const OPTION_KEYS = {
 	PropertyDeclaration: "propertyDeclaration",
 	VariableDeclaration: "variableDeclaration",
 	VariableDeclarationIgnoreFunction: "variableDeclarationIgnoreFunction",
+	Debug: "debug",
 } as const;
 
 /**
@@ -37,4 +38,5 @@ export const DEFAULT_OPTIONS: TypedefRuleOptions = {
 	propertyDeclaration: false,
 	variableDeclaration: false,
 	variableDeclarationIgnoreFunction: false,
+	debug: false,
 };
