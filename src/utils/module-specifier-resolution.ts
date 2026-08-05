@@ -26,7 +26,7 @@ import type ts from "typescript";
  *   producing aliases like `@/payload-types`, `@types/foo`, etc.
  * - **node_modules** are resolved to their package name (handles scoped
  *   packages like `@scope/name`).
- * - **@types/react** and **typescript/lib** are intentionally skipped —
+ * - **@types/react** and **typescript/lib** are intentionally skipped -
  *   `qualifyKnownGlobalType` prefixes React types with `React.` so they
  *   don't need importing, and TS built-in types are global.
  *

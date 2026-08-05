@@ -30,7 +30,7 @@ These rules enforce five core architectural principles. Every section in this do
 
 - **String literals**: Use **double quotes** (`"..."`) for normal string literals. Use **template literals** (`` `${expression}` `` or multi-line `` `...` ``) only when you need interpolation or a multi-line string body. Do not use single-quoted (`'...'`) string literals.
 
-- **Hyphens / dashes**: Always use **only** a plain **hyphen-minus** (`-`) wherever you need a dash. **Never** use an **en dash** (`-`) or **em dash** (`-`).
+- **Hyphens / dashes**: Always use **only** a plain **hyphen-minus** (`-`) wherever you need a dash. **Never** use an **en dash** (`–`) or **em dash** (`—`).
 
 - **Semicolons**: Terminate statements with **semicolons** (`;`). Apply semicolons consistently in TypeScript source (imports, exports, declarations, assignments, return statements, and similar statement forms).
 
