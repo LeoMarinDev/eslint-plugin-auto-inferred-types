@@ -1,7 +1,16 @@
 {
     "name": "eslint-plugin-auto-inferred-types",
     "version": "0.1.0",
-    "description": "ES Lint Plugin Auto Inferred Types",
+    "description": "ESLint plugin that detects missing type annotations in TypeScript and autofixes them from the compiler's type inference, including auto-import of referenced types",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/LeoMarinDev/eslint-plugin-auto-inferred-types.git"
+    },
+    "homepage": "https://github.com/LeoMarinDev/eslint-plugin-auto-inferred-types#readme",
+    "bugs": {
+        "url": "https://github.com/LeoMarinDev/eslint-plugin-auto-inferred-types/issues"
+    },
     "type": "module",
     "main": "./dist/index.js",
     "module": "./dist/index.js",
@@ -14,7 +23,8 @@
     },
     "files": [
         "dist",
-        "src"
+        "src",
+        "package.json"
     ],
     "keywords": [
         "eslint",
