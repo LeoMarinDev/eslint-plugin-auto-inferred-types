@@ -8,9 +8,13 @@ An ESLint plugin for TypeScript that detects missing type annotations and autofi
 
 ## Sponsor
 
-[![BrainyBuilds](https://brainybuilds.com/favicon.svg)](https://brainybuilds.com/)
+<div align="center">
 
-eslint-plugin-auto-inferred-types is sponsored by BrainyBuilds - https://brainybuilds.com/ - thank you for supporting the project.
+<a href="https://brainybuilds.com/" target="_blank" rel="noopener noreferrer"><img src="https://brainybuilds.com/favicon.svg" alt="Brainy Builds" width="42" height="42" /> **Brainy Builds**</a>
+
+eslint-plugin-auto-inferred-types is sponsored by [BrainyBuilds](https://brainybuilds.com/). Thank you for supporting the project!
+
+</div>
 
 ## Prerequisites
 
