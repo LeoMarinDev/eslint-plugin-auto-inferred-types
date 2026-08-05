@@ -1,0 +1,175 @@
+---
+description: When the user's request is underspecified, interview them one question at a time with your best guess attached until you can predict their answers.
+priority: high
+alwaysApply: true
+---
+
+# Ask Me
+
+## Purpose
+
+What people ask for and what they actually want are often different things. This rule closes that gap before any code exists. Ask the minimum set of clarifying questions needed to avoid wrong work; do not start implementing until the must-have questions are answered (or the user explicitly approves proceeding with stated assumptions).
+
+## When to Use
+
+**Apply this when:**
+- The ask is missing at least one of: **who** the user is, **why** they want it, what **success** looks like, what the binding **constraint** is.
+- The request is conventional rather than specific ("build me a dashboard", "make it faster") and you cannot unpack the convention without guessing.
+- You are tempted to start with assumptions you have not surfaced.
+- The user explicitly says: "interview me", "grill me", "before we start, are we sure?", "stress-test my thinking".
+
+**Do NOT use when:**
+- The ask is unambiguous and self-contained ("rename this variable", "fix this typo").
+- The user explicitly asks for speed over verification.
+- Pure information requests ("how does X work?", "what does this code do?").
+- Mechanical operations (renames, formats, file moves).
+- You already have >= 9/10 confidence.
+
+**Non-interactive constraint:** This rule needs a live, responsive user. Do not invoke in CI pipelines, scheduled runs, or autonomous loops. If the ask is underspecified in a non-interactive context, flag it as a blocker instead of guessing.
+
+## Core Process
+
+### Step 1: Detect underspecification
+
+Treat a request as underspecified if any of these are unclear:
+- **Objective** - what should change vs stay the same.
+- **Done** - acceptance criteria, examples, edge cases.
+- **Scope** - which files, components, or users are in/out.
+- **Constraints** - compatibility, performance, style, deps, time.
+- **Environment** - language/runtime versions, OS, build/test runner.
+- **Safety** - data migration, rollout/rollback, risk.
+
+If multiple plausible interpretations exist, assume it is underspecified.
+
+### Step 2: Hypothesize with a confidence score (0-10)
+
+Before asking anything, write down your current best read of what the user wants in **one sentence**, plus an honest confidence score (0-10):
+
+```
+HYPOTHESIS: You want a way to answer "how are we doing?" in standup, and "dashboard" was the convention that came to mind.
+CONFIDENCE: ~3 - missing: who it's for, what "metrics" means in context, and what success looks like
+```
+
+The score forces honesty. If you wrote a high score but cannot predict the user's reactions to the next three questions, the score is wrong. Start at the level you can defend.
+
+When confidence is below **~7/10**, append a brief reason - what is still unresolved or missing. This tells the user exactly what the interview needs to surface.
+
+### Step 3: Ask one question at a time, each with a guess attached
+
+Format:
+
+```
+Q:     <one focused question>
+GUESS: <your hypothesis for the answer, with the reasoning that produced it>
+```
+
+Wait for the user to react before asking the next question.
+
+**Why one at a time:** The user cannot react to your hypotheses if you bury them in a list. Batches encourage skim-reading. The third question often depends on the answer to the first; asking them all at once locks in the wrong framing.
+
+**Why attach a guess:** The user reacts faster to a wrong guess than they generate an answer from scratch. It commits you to a hypothesis you can be visibly wrong about, which keeps you honest.
+
+**Risk:** A polite user may agree with your guess to be agreeable. Mitigate by being visibly willing to be wrong, and occasionally guess in a direction you expect pushback on.
+
+### Step 4: Listen for "want vs should want"
+
+Watch for answers where the user says what a thoughtful answer *sounds like* rather than what they actually want:
+- Best-practice talk ("I want it to be scalable", "clean architecture") without specifics.
+- Convention deferral ("the way most apps do it", "the standard approach").
+- Phrases like "I should probably...", "I think I'm supposed to...".
+- Buzzwords as goals: "modern", "scalable", "robust" without a specific outcome.
+
+When you hear these, ask:
+
+> *"If you didn't have to justify this to anyone, what would you actually want?"*
+
+### Step 5: Restate intent in the user's own words
+
+When your confidence is high, write back what you now think the user wants. Keep it tight, use their language, and structure it so they can confirm or correct line by line:
+
+```
+Here's what I now think you want:
+
+- Outcome:      <one line>
+- User:         <one line - who benefits>
+- Why now:      <one line - what changed>
+- Success:      <one line - how we know it worked>
+- Constraint:   <one line - the binding limit>
+- Out of scope: <one line - what we're explicitly not doing>
+
+Yes / no / refine?
+```
+
+Including "Out of scope" is non-negotiable. Half of misalignment is silent disagreement about what is *not* being built.
+
+### Step 6: Confirm - explicit yes, not "whatever you think"
+
+The gate is an explicit **"yes."** The following are **not** yes:
+
+- "Whatever you think is best." - The user is delegating. Re-ask with two concrete options framed as a choice.
+- "Sounds good." - Ambiguous. Ask: "Anything you'd refine?"
+- "Sure, let's go." - Often a polite exit, not an endorsement.
+- Silence followed by "okay let's start." - The user has given up on the interview. Stop and ask if you missed something.
+
+If they correct you, fold the correction in and restate. Loop until you get an explicit yes.
+
+### The 9/10 Confidence Stop
+
+You are done when you can answer yes to: *"Can I predict the user's reaction to the next three questions I would ask?"*
+
+If yes, you have shared understanding. Stop interviewing and produce the restate. If no, ask the next question.
+
+If you have gone several rounds and still cannot predict their reactions, stop and tell the user: "I have asked X questions and I still cannot predict your reactions. Something foundational is missing. Want to step back?"
+
+## Making Questions Easy to Answer
+
+- Keep questions short and numbered; avoid paragraphs.
+- Offer multiple-choice options when possible.
+- Suggest reasonable defaults. Mark defaults clearly (e.g., **bold** the recommended choice).
+- Include a fast-path response (e.g., reply `defaults` to accept all recommended choices).
+- Include a low-friction "not sure" option (e.g., "Not sure - use default").
+- Structure options so the user can reply with compact codes (e.g., `1b 2a 3c`); restate their choices in plain language to confirm.
+- Use templates like:
+  - "Before I start, I need: (1) ..., (2) ..., (3) .... If you do not care about (2), I will assume ..."
+  - "Which of these should it be? A) ... B) ... C) ... (pick one)"
+  - "What would you consider 'done'? For example: ..."
+
+```text
+1) Scope?
+a) Minimal change (default)
+b) Refactor while touching the area
+c) Not sure - use default
+2) Compatibility target?
+a) Current project defaults (default)
+b) Also support older versions: <specify>
+c) Not sure - use default
+
+Reply with: defaults (or 1a 2a)
+```
+
+## Red Flags and Anti-patterns
+
+- Three or more questions in a single message: that is batching, not interviewing.
+- A question without your hypothesis attached: that is surveying, not committing.
+- Accepting "whatever you think is best" as a terminal answer.
+- Producing a spec, plan, or task list before the user has explicitly confirmed your restate.
+- Questions framed as "what would be best practice?" instead of "what do you actually want?"
+- Accepting buzzwords ("scalable", "clean", "modern") without probing whether they are what the user actually wants.
+- Three or more rounds without your confidence visibly rising: you are asking the wrong questions - step back and reframe.
+- A confidence score below ~7/10 with no reason attached: the user cannot help close the gap if they do not know what is missing.
+- Saving the intent doc before the user has confirmed (the doc itself implies a yes the user did not give).
+- Skipping the "Out of scope" line in the restate.
+- Asking questions you can answer with a quick, low-risk discovery read (configs, existing patterns, docs).
+- Asking open-ended questions if a tight multiple-choice or yes/no would eliminate ambiguity faster.
+
+## Verification Checklist
+
+After applying this rule:
+
+- [ ] An explicit hypothesis with a confidence score (0-10) was stated in the first turn.
+- [ ] Every confidence score below ~7/10 was accompanied by a one-line reason (what is still unresolved or missing).
+- [ ] Questions were asked one at a time, each with your guess attached.
+- [ ] At least one "what would you actually want if you did not have to justify it?" probe ran when the user gave a sophistication-signaling or convention-signaling answer.
+- [ ] A concrete restate (Outcome / User / Why now / Success / Constraint / Out of scope) was written back to the user.
+- [ ] The user confirmed the restate with an explicit yes (not "whatever you think", not "sounds good", not silence).
+- [ ] At the stop point, you could predict reactions to the next three questions you would ask.
