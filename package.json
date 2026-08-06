@@ -3,6 +3,10 @@
     "version": "0.1.0",
     "description": "ESLint plugin that detects missing type annotations in TypeScript and autofixes them from the compiler's type inference, including auto-import of referenced types",
     "license": "MIT",
+    "author": {
+        "name": "Leo Marinchenko",
+        "url": "https://github.com/LeoMarinDev"
+    },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/LeoMarinDev/eslint-plugin-auto-inferred-types.git"
@@ -12,6 +16,7 @@
         "url": "https://github.com/LeoMarinDev/eslint-plugin-auto-inferred-types/issues"
     },
     "type": "module",
+    "sideEffects": false,
     "main": "./dist/index.js",
     "module": "./dist/index.js",
     "types": "./dist/index.d.ts",
@@ -39,6 +44,9 @@
         "eslint": ">=10.0.0",
         "typescript": "^6.0.0"
     },
+    "engines": {
+        "node": ">=20.19.0"
+    },
     "scripts": {
         "lint:fix": "eslint . --fix",
         "build": "tsup",
@@ -63,5 +71,12 @@
         "tsx": "^4.23.0",
         "typescript": "^6.0.3",
         "typescript-eslint": "^8.65.0"
+    },
+    "funding": {
+        "type": "custom",
+        "url": "https://brainybuilds.com/"
+    },
+    "publishConfig": {
+        "access": "public"
     }
 }
