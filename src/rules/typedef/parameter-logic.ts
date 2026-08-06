@@ -40,7 +40,7 @@ function checkParameters(
 	}: CheckParametersParams = params;
 
 	for (
-		let paramIndex = 0;
+		let paramIndex: number = 0;
 		paramIndex < parameterList.length;
 		paramIndex++
 	) {
@@ -138,7 +138,7 @@ function resolveParameterAnnotationTarget(
 function parameterHasTypeAnnotation(
 	annotationTarget: TSESTree.Node,
 ): boolean {
-	let hasAnnotation = false;
+	let hasAnnotation: boolean = false;
 
 	if (
 		annotationTarget.type === AST_NODE_TYPES.Identifier

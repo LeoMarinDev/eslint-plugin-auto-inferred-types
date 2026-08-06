@@ -94,4 +94,65 @@ describe("plugin integration", () => {
 			`expected no remaining messages, got ${JSON.stringify(result.messages)}`,
 		);
 	});
+
+	it("dogfooding: as-const literals that forced disable comments are not reported", () => {
+		const linter = new Linter({ configType: "flat" });
+		const config = {
+			files: [
+				"**/*.ts",
+			],
+			plugins: {
+				[PLUGIN_NAMESPACE]: plugin,
+			},
+			rules: {
+				[RULE_CONFIG_KEY]: [
+					"error",
+					{
+						variableDeclaration: true,
+						memberVariableDeclaration: true,
+						arrayDestructuring: true,
+						objectDestructuring: true,
+					},
+				],
+			},
+			languageOptions: {
+				parser,
+				parserOptions: {
+					project: FIXTURE_TSCONFIG,
+				},
+			},
+		};
+
+		const snippets = [
+			"export const RULE_TYPE_SUGGESTION = \"suggestion\" as const;",
+			"export const RULE_FIXABLE_CODE = \"code\" as const;",
+			"export const RULE_LEVEL_ERROR = \"error\" as const;",
+			"export const OPTION_KEYS = {\n\tArrayDestructuring: \"arrayDestructuring\",\n} as const;",
+			"const [a, b] = [1, 2] as const;",
+		];
+
+		for (
+			let snippetIndex = 0;
+			snippetIndex < snippets.length;
+			snippetIndex++
+		) {
+			const snippet = snippets[snippetIndex];
+			const result = linter.verifyAndFix(
+				snippet,
+				config,
+				FIXTURE_FILENAME,
+			);
+
+			assert.strictEqual(
+				result.messages.length,
+				0,
+				`expected no messages for snippet ${snippetIndex}, got ${JSON.stringify(result.messages)}`,
+			);
+			assert.strictEqual(
+				result.output,
+				snippet,
+				`expected ${JSON.stringify(snippet)} to be untouched, got ${JSON.stringify(result.output)}`,
+			);
+		}
+	});
 });

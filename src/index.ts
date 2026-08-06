@@ -43,8 +43,10 @@ plugin.configs.recommended = {
 
 plugin.configs["flat/recommended"] = plugin.configs.recommended;
 
-const rules = plugin.rules;
-const configs = plugin.configs;
+const {
+	rules,
+	configs,
+}: AutoInferredTypesPlugin = plugin;
 
 export {
 	configs,

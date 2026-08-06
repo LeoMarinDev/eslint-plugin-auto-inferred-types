@@ -90,7 +90,7 @@ function resolveNodeModuleSpecifier(
 		normalized.includes(TYPES_REACT_SUBPATH)
 		|| normalized.includes(TYPESCRIPT_LIB_SUBPATH)
 	) {
-		const skipped = undefined;
+		const skipped: undefined = undefined;
 		return skipped;
 	}
 
@@ -101,7 +101,7 @@ function resolveNodeModuleSpecifier(
 	if (
 		scopeIdx >= parts.length
 	) {
-		const noPackage = undefined;
+		const noPackage: undefined = undefined;
 		return noPackage;
 	}
 
@@ -114,11 +114,11 @@ function resolveNodeModuleSpecifier(
 		if (
 			scopedNameIdx >= parts.length
 		) {
-			const incompleteScoped = undefined;
+			const incompleteScoped: undefined = undefined;
 			return incompleteScoped;
 		}
 		const scopedName: string = parts[scopedNameIdx];
-		const scopedSpecifier = `${scopeOrPkg}/${scopedName}`;
+		const scopedSpecifier: string = `${scopeOrPkg}/${scopedName}`;
 		return scopedSpecifier;
 	}
 
@@ -154,7 +154,7 @@ function resolveLocalAliasSpecifier(
 	if (
 		paths === undefined
 	) {
-		const noPaths = undefined;
+		const noPaths: undefined = undefined;
 		return noPaths;
 	}
 
@@ -163,7 +163,7 @@ function resolveLocalAliasSpecifier(
 	);
 
 	for (
-		let entryIndex = 0;
+		let entryIndex: number = 0;
 		entryIndex < pathEntries.length;
 		entryIndex++
 	) {
@@ -179,7 +179,7 @@ function resolveLocalAliasSpecifier(
 		}
 	}
 
-	const noMatch = undefined;
+	const noMatch: undefined = undefined;
 	return noMatch;
 }
 
@@ -205,11 +205,11 @@ function resolveCwdFallbackSpecifier(
 		const suffix: string = relativeToCwd
 			.slice(SRC_PREFIX.length)
 			.replace(EXTENSION_PATTERN, "");
-		const specifier = `@${suffix}`;
+		const specifier: string = `@${suffix}`;
 		return specifier;
 	}
 
-	const noMatch = undefined;
+	const noMatch: undefined = undefined;
 	return noMatch;
 }
 
@@ -246,7 +246,7 @@ function stripPrefix(
 		prefix,
 	}: StripPrefixParams = params;
 
-	const withSlash = `${prefix  }/`;
+	const withSlash: string = `${prefix  }/`;
 	if (
 		path.startsWith(withSlash)
 	) {
@@ -272,7 +272,7 @@ function buildSortedPathEntries(
 	const rawEntries: Array<[string, string[]]> = Object.entries(paths);
 
 	for (
-		let entryIndex = 0;
+		let entryIndex: number = 0;
 		entryIndex < rawEntries.length;
 		entryIndex++
 	) {

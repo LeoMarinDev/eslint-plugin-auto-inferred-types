@@ -4,6 +4,7 @@ import {
 
 import {
 	isAncestorHasTypeAnnotation,
+	isAsExpressionInitializer,
 	isForOfStatementContext,
 	isVariableDeclarationIgnoreFunction,
 } from "@utils/typedef-shared";
@@ -44,15 +45,15 @@ function isVariableDeclaratorInLoop(
 			current.type === AST_NODE_TYPES.ForOfStatement
 			|| current.type === AST_NODE_TYPES.ForInStatement
 		) {
-			const inLoop = true;
+			const inLoop: boolean = true;
 			return inLoop;
 		}
 
-		const notInLoop = false;
+		const notInLoop: boolean = false;
 		return notInLoop;
 	}
 
-	const notInLoop = false;
+	const notInLoop: boolean = false;
 	return notInLoop;
 }
 
@@ -81,7 +82,7 @@ function shouldSkipVariableDeclarator(
 	if (
 		variableDeclaration === false
 	) {
-		const skip = true;
+		const skip: boolean = true;
 		return skip;
 	}
 
@@ -90,7 +91,18 @@ function shouldSkipVariableDeclarator(
 	if (
 		hasTypeAnnotation === true
 	) {
-		const skip = true;
+		const skip: boolean = true;
+		return skip;
+	}
+
+	const isAsExpression: boolean = isAsExpressionInitializer(
+		node.init ?? undefined,
+	);
+
+	if (
+		isAsExpression === true
+	) {
+		const skip: boolean = true;
 		return skip;
 	}
 
@@ -102,7 +114,7 @@ function shouldSkipVariableDeclarator(
 	if (
 		isArrayPattern === true
 	) {
-		const skip = true;
+		const skip: boolean = true;
 		return skip;
 	}
 
@@ -114,7 +126,7 @@ function shouldSkipVariableDeclarator(
 	if (
 		isObjectPattern === true
 	) {
-		const skip = true;
+		const skip: boolean = true;
 		return skip;
 	}
 
@@ -126,11 +138,11 @@ function shouldSkipVariableDeclarator(
 	if (
 		isFunctionInitializer === true
 	) {
-		const skip = true;
+		const skip: boolean = true;
 		return skip;
 	}
 
-	const skip = false;
+	const skip: boolean = false;
 	return skip;
 }
 
@@ -147,7 +159,7 @@ function shouldSkipArrayPattern(
 		node.parent.type === AST_NODE_TYPES.RestElement
 		&& node.parent.typeAnnotation !== undefined
 	) {
-		const skip = true;
+		const skip: boolean = true;
 		return skip;
 	}
 
@@ -157,11 +169,11 @@ function shouldSkipArrayPattern(
 		|| isAncestorHasTypeAnnotation(node) === true
 		|| node.parent.type === AST_NODE_TYPES.AssignmentExpression
 	) {
-		const skip = true;
+		const skip: boolean = true;
 		return skip;
 	}
 
-	const skip = false;
+	const skip: boolean = false;
 	return skip;
 }
 
@@ -185,16 +197,20 @@ function shouldSkipPropertyDefinition(
 		node: node.value ?? undefined,
 		variableDeclarationIgnoreFunction,
 	});
+	const isAsExpression: boolean = isAsExpressionInitializer(
+		node.value ?? undefined,
+	);
 
 	if (
 		isFunctionValue === true
+		|| isAsExpression === true
 		|| node.typeAnnotation !== undefined
 	) {
-		const skip = true;
+		const skip: boolean = true;
 		return skip;
 	}
 
-	const skip = false;
+	const skip: boolean = false;
 	return skip;
 }
 
@@ -212,11 +228,11 @@ function shouldSkipObjectPattern(
 		|| isForOfStatementContext(node) === true
 		|| isAncestorHasTypeAnnotation(node) === true
 	) {
-		const skip = true;
+		const skip: boolean = true;
 		return skip;
 	}
 
-	const skip = false;
+	const skip: boolean = false;
 	return skip;
 }
 

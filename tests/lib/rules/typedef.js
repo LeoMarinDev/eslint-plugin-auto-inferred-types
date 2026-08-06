@@ -151,13 +151,150 @@ const INVALID_CASES = [
 	},
 ];
 
+/**
+ * `as const` literal config constants (UPPER_CASE values in `./src/config/**`).
+ *
+ * These surfaced during dogfooding as cases that forced
+ * `// eslint-disable-next-line auto-inferred-types/typedef` comments:
+ *
+ * 1. A literal like `const X = "error" as const` cannot be widened to
+ *    `string` without losing the literal type the consuming code relies on.
+ *    The plugin must NOT report it at all (reporting-without-a-fix is a bug).
+ * 2. A literal object like `const X = { k: "v" } as const` must stay an
+ *    `as const` object (typed via its literal members); the plugin previously
+ *    produced a bogus structural annotation
+ *    `X: { readonly k: "v" } = { ... } as const` which is wrong on two counts:
+ *    it duplicates the literal shape and conflicts with the `as const` assertion.
+ *
+ * Both are expected to be VALID (fully skipped) once the bug is fixed.
+ */
+const AS_CONST_VALID_CASES = [
+	{
+		name: "as const string literal is skipped (cannot be widened)",
+		code: "export const RULE_LEVEL_ERROR = \"error\" as const;",
+		options: [{ variableDeclaration: true }],
+	},
+	{
+		name: "as const number literal is skipped (cannot be widened)",
+		code: "export const HTTP_STATUS = 200 as const;",
+		options: [{ variableDeclaration: true }],
+	},
+	{
+		name: "as const boolean literal is skipped (cannot be widened)",
+		code: "export const ENABLED = true as const;",
+		options: [{ variableDeclaration: true }],
+	},
+	{
+		name: "as const object literal is skipped without a structural annotation",
+		code: [
+			"export const OPTION_KEYS = {",
+			"\tArrayDestructuring: \"arrayDestructuring\",",
+			"} as const;",
+		].join("\n"),
+		options: [{ variableDeclaration: true }],
+	},
+	{
+		name: "as const object with multiple literal members is skipped",
+		code: [
+			"export const META_KEYS = {",
+			"\tArrayDestructuring: \"arrayDestructuring\",",
+			"\tArrowParameter: \"arrowParameter\",",
+			"\tDebug: \"debug\",",
+			"} as const;",
+		].join("\n"),
+		options: [{ variableDeclaration: true }],
+	},
+	{
+		name: "as const class field value is skipped",
+		code: [
+			"class C {",
+			"\treadonly mode = \"suggestion\" as const;",
+			"}",
+		].join("\n"),
+		options: [{ memberVariableDeclaration: true }],
+	},
+	{
+		name: "as const array destructuring initializer is skipped",
+		code: "const [a, b] = [1, 2] as const;",
+		options: [{ arrayDestructuring: true, variableDeclaration: true }],
+	},
+	{
+		name: "as const object destructuring initializer is skipped",
+		code: [
+			"const { a } = { a: 1 } as const;",
+		].join("\n"),
+		options: [{ objectDestructuring: true, variableDeclaration: true }],
+	},
+];
+
+/**
+ * Documented safety-guard skip cases (README "Safety guards"): initialized
+ * bindings whose inferred type is `any`, `never`, `void`, an error type, or
+ * `null` in a `let` binding. The compiler cannot emit a safe annotation for
+ * these, so the rule must leave them UNREPORTED (else the user is forced to
+ * disable the rule). All are expected to be VALID.
+ */
+const SKIP_GUARD_VALID_CASES = [
+	{
+		name: "function returning void is not reported",
+		code: [
+			"function foo(): void {}",
+			"const x = foo();",
+		].join("\n"),
+		options: [{ variableDeclaration: true }],
+	},
+	{
+		name: "function returning never is not reported",
+		code: [
+			"function foo(): never { throw new Error(\"boom\"); }",
+			"const x = foo();",
+		].join("\n"),
+		options: [{ variableDeclaration: true }],
+	},
+	{
+		name: "let x = null is not reported (null annotation only for const)",
+		code: "let x = null;",
+		options: [{ variableDeclaration: true }],
+	},
+	{
+		name: "error type symbol is not reported",
+		code: [
+			"import { missingType } from \"./does-not-exist\";",
+			"const x = missingType;",
+		].join("\n"),
+		options: [{ variableDeclaration: true }],
+	},
+	{
+		name: "for-of declarator is not reported",
+		code: [
+			"const items: string[] = [];",
+			"for (const item of items) { console.log(item); }",
+		].join("\n"),
+		options: [{ variableDeclaration: true, arrayDestructuring: true }],
+	},
+];
+
 ruleTester.run("typedef", typedefRule, {
-	valid: VALID_CASES.map((c) => ({
-		name: c.name,
-		code: c.code,
-		options: c.options,
-		filename: c.filename ?? FIXTURE_PATH,
-	})),
+	valid: [
+		...VALID_CASES.map((c) => ({
+			name: c.name,
+			code: c.code,
+			options: c.options,
+			filename: c.filename ?? FIXTURE_PATH,
+		})),
+		...AS_CONST_VALID_CASES.map((c) => ({
+			name: c.name,
+			code: c.code,
+			options: c.options,
+			filename: c.filename ?? FIXTURE_PATH,
+		})),
+		...SKIP_GUARD_VALID_CASES.map((c) => ({
+			name: c.name,
+			code: c.code,
+			options: c.options,
+			filename: c.filename ?? FIXTURE_PATH,
+		})),
+	],
 	invalid: INVALID_CASES.map((c) => ({
 		name: c.name,
 		code: c.code,

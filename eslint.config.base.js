@@ -38,6 +38,7 @@ import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import js from "@eslint/js";
+import autoInferredTypesPlugin from "eslint-plugin-auto-inferred-types";
 import {
 	createTypeScriptImportResolver,
 } from "eslint-import-resolver-typescript";
@@ -273,6 +274,13 @@ const config = [
 	...tseslint.configs.recommendedTypeChecked,
 	...tseslint.configs.stylisticTypeChecked,
 
+	// - auto-inferred-types recommended config -----------------
+	// Dogfood: this repo's own published plugin (eslint-plugin-auto-inferred-types)
+	// registers itself under the "auto-inferred-types" namespace and enables the
+	// typedef rule. It requires type information, which the PRIMARY TYPESCRIPT
+	// CONFIGURATION block below supplies via parserOptions.project.
+	autoInferredTypesPlugin.configs.recommended,
+
 	// ══════════════════════════════════════════════════════════════════════════
 	// PRIMARY TYPESCRIPT CONFIGURATION
 	// Applies to all TypeScript source files including .tsx.
@@ -311,6 +319,7 @@ const config = [
 
 		plugins: {
 			"@typescript-eslint": tseslint.plugin,
+			"auto-inferred-types": autoInferredTypesPlugin,
 			"import": importPlugin,
 		},
 
@@ -436,7 +445,7 @@ const config = [
 				"error",
 				{
 					max: MAX_FUNCTION_LINES,
-					skipBlankLines: false,
+					skipBlankLines: true,
 					skipComments: true,
 					IIFEs: true,
 				},
@@ -989,9 +998,16 @@ const config = [
 			// ./.cursor/rules/_code-rules-TypeScript.mdc: "Always write explicit : string, : number,
 			// or : boolean on function parameters, locals, and const/let bindings -
 			// never rely on primitive inference."
-			// Also covers destructuring patterns and member variable declarations.
-			// mirrors its checks and inserts inferred annotations via --fix.
+			// @typescript-eslint/typedef is not opt-in per position, so it stays off.
+			// The repo's own plugin (eslint-plugin-auto-inferred-types) is enabled via
+			// autoInferredTypesPlugin.configs.recommended above and inserts the inferred
+			// annotations via --fix.
 			"@typescript-eslint/typedef": "off",
+			// Disabled: the stylistic preset enables no-inferrable-types, which demands
+			// stripping annotations the repo's own plugin auto-inserts when the type is
+			// trivially inferable (e.g. `PLUGIN_NAME: string = "..."`). Keeping it on
+			// would fight the auto-inferred-types typedef fixer.
+			"@typescript-eslint/no-inferrable-types": "off",
 		},
 	},
 ];

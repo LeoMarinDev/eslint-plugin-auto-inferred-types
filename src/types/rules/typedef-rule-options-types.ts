@@ -1,7 +1,11 @@
 import type {
+	ResolvedAnnotationTarget,
+} from "@types-internal/utils/typedef-shared-types";
+import type {
 	TSESLint,
 	TSESTree,
 } from "@typescript-eslint/utils";
+
 
 /**
  * Options accepted by the `typedef` rule.
@@ -53,6 +57,14 @@ export interface ReportMissingAnnotationParams {
 	annotationTarget: TSESTree.Node;
 	inferenceNode: TSESTree.Node | undefined;
 	name: string | undefined;
+}
+
+/**
+ * Parameter object for the `reportUninferableAsUnreported` predicate.
+ */
+export interface ReportUninferableAsUnreportedParams {
+	ruleContext: TypedefRuleContext;
+	resolved: ResolvedAnnotationTarget | undefined;
 }
 
 /**

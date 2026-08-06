@@ -20,7 +20,7 @@ interface PackageJson {
  * the built artifact (one directory above `dist/`), not to the source
  * location under `src/config/plugin/`.
  */
-const PACKAGE_JSON_RELATIVE_PATH = "../package.json";
+const PACKAGE_JSON_RELATIVE_PATH: string = "../package.json";
 
 const packageJsonRaw: string = readFileSync(
 	new URL(PACKAGE_JSON_RELATIVE_PATH, import.meta.url),
@@ -35,7 +35,7 @@ const packageJson: PackageJson = JSON.parse(packageJsonRaw) as PackageJson;
  * Matches the `name` field in `package.json` and is used as the
  * `meta.name` of the plugin object exposed by `src/index.ts`.
  */
-export const PLUGIN_NAME = "eslint-plugin-auto-inferred-types";
+export const PLUGIN_NAME: string = "eslint-plugin-auto-inferred-types";
 
 /**
  * Published version of the ESLint plugin package.
@@ -52,4 +52,4 @@ export const PLUGIN_VERSION: string = packageJson.version;
  * Also prefixes every rule config key in the `recommended` config
  * (e.g. `auto-inferred-types/typedef`).
  */
-export const PLUGIN_NAMESPACE = "auto-inferred-types";
+export const PLUGIN_NAMESPACE: string = "auto-inferred-types";

@@ -63,7 +63,7 @@ function buildInferredTypeAnnotationFixes(
 	if (
 		typeText === undefined
 	) {
-		const noFix = undefined;
+		const noFix: undefined = undefined;
 		return noFix;
 	}
 
@@ -143,7 +143,7 @@ function buildImportTypeFixes(
 	const moduleSpecifiers: string[] = [...importsByModule.keys()];
 
 	for (
-		let moduleIndex = 0;
+		let moduleIndex: number = 0;
 		moduleIndex < moduleSpecifiers.length;
 		moduleIndex++
 	) {
@@ -249,7 +249,7 @@ function buildSingleModuleFix(
 		canAppend
 	) {
 		const lastSpecifier: TSESTree.ImportClause = existingImport!.specifiers[existingImport!.specifiers.length - 1];
-		const specifiersText = `, ${sortedNames.join(", ")}`;
+		const specifiersText: string = `, ${sortedNames.join(", ")}`;
 		const appendFix: TSESLint.RuleFix = fixer.insertTextAfter(
 			lastSpecifier,
 			specifiersText,
@@ -257,7 +257,7 @@ function buildSingleModuleFix(
 		return appendFix;
 	}
 
-	const importStatement = `import type { ${sortedNames.join(", ")} } from "${moduleSpecifier}";`;
+	const importStatement: string = `import type { ${sortedNames.join(", ")} } from "${moduleSpecifier}";`;
 
 	if (
 		lastImport !== undefined
@@ -287,7 +287,7 @@ function buildSingleModuleFix(
 function canAppendToExistingImport(
 	existingImport: TSESTree.ImportDeclaration | undefined,
 ): boolean {
-	let canAppend = false;
+	let canAppend: boolean = false;
 
 	if (
 		existingImport !== undefined

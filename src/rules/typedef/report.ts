@@ -12,14 +12,19 @@ import {
 	buildInferredTypeAnnotationFixes,
 } from "@utils/import-fix-builder";
 import {
+	getInferredTypeText,
+} from "@utils/type-inference";
+import {
 	resolveAnnotationTarget,
 } from "@utils/typedef-shared";
 
 import type {
 	ReportMissingAnnotationParams,
+	ReportUninferableAsUnreportedParams,
 	TypedefMessageIds,
 	TypedefRuleContext,
 } from "@types-internal/rules/typedef-rule-options-types";
+import type { InferredTypeFixResult } from "@types-internal/utils/type-imports-types";
 import type {
 	ResolvedAnnotationTarget,
 } from "@types-internal/utils/typedef-shared-types";
@@ -32,9 +37,17 @@ import type {
  * an autofix that inserts the TypeScript-inferred type text plus any required
  * `import type` declarations.
  *
- * The fix is skipped when no inference node resolves, when the inferred type
- * text exceeds `MAX_INFERRED_TYPE_LENGTH`, or when the annotation target is
- * not a supported node type.
+ * Grammar of the report:
+ * - `inferenceNode === undefined` (e.g. a bare function parameter with no
+ *   default): always reported without a fix, matching `@typescript-eslint/typedef`.
+ * - `inferenceNode !== undefined` but the inferred type is unreadable (the
+ *   compiler's own safety guards: `any`, `never`, error types, `void`, empty
+ *   type text, `null` on a `let` binding, `as const` assertions): left
+ *   UNREPORTED - no safe annotation exists, so reporting would only force the
+ *   user to disable the rule.
+ * - Inferred type text longer than `MAX_INFERRED_TYPE_LENGTH`: reported, but
+ *   the autofix is skipped so a multi-line structural type is never inserted.
+ * - Otherwise: reported with an autofix that inserts the annotation.
  *
  * @param {ReportMissingAnnotationParams} params - The parameters object.
  * @param {TypedefRuleContext} params.ruleContext - The bundled rule context and resolved options.
@@ -59,6 +72,22 @@ function reportMissingAnnotation(
 		context,
 	}: TypedefRuleContext = ruleContext;
 
+	const resolved: ResolvedAnnotationTarget | undefined = resolveAnnotationTarget({
+		annotationTarget,
+		inferenceNode,
+	});
+
+	const isUnreportedUninferable: boolean = reportUninferableAsUnreported({
+		ruleContext,
+		resolved,
+	});
+
+	if (
+		isUnreportedUninferable
+	) {
+		return;
+	}
+
 	const messageId: TypedefMessageIds = (
 		name !== undefined
 			? "expectedTypedefNamed"
@@ -74,11 +103,6 @@ function reportMissingAnnotation(
 		fix(
 			fixer: TSESLint.RuleFixer,
 		): TSESLint.RuleFix[] | null {
-			const resolved: ResolvedAnnotationTarget | undefined = resolveAnnotationTarget({
-				annotationTarget,
-				inferenceNode,
-			});
-
 			if (
 				resolved === undefined
 			) {
@@ -89,11 +113,11 @@ function reportMissingAnnotation(
 						reason: "no-inference-node",
 					},
 				});
-				const noFix = null;
+				const noFix: null = null;
 				return noFix;
 			}
 
-			const inferredFix = buildInferredTypeAnnotationFixes({
+			const inferredFix: InferredTypeFixResult | undefined = buildInferredTypeAnnotationFixes({
 				context,
 				fixer,
 				inferenceNode: resolved.inferenceNode,
@@ -110,11 +134,11 @@ function reportMissingAnnotation(
 						reason: inferredFix === undefined ? "no-type-text" : "type-too-long",
 					},
 				});
-				const noFix = null;
+				const noFix: null = null;
 				return noFix;
 			}
 
-			const annotationText = `${ANNOTATION_SEPARATOR}${inferredFix.typeText}`;
+			const annotationText: string = `${ANNOTATION_SEPARATOR}${inferredFix.typeText}`;
 			const annotationFix: TSESLint.RuleFix = fixer.insertTextAfter(
 				resolved.annotationTarget,
 				annotationText,
@@ -141,6 +165,67 @@ function reportMissingAnnotation(
 	context.report(reportDescriptor);
 }
 
+/**
+ * Decides whether a missing annotation should be left entirely UNREPORTED
+ * because no safe annotation can be inferred.
+ *
+ * When an inference node exists but the compiler's safety guards reject its
+ * type (`any`, `never`, error types, `void`, empty text, `null` on a `let`,
+ * `as const` assertions), `buildInferredTypeAnnotationFixes` yields no type
+ * text. Reporting the node anyway would only force the user to add a disable
+ * comment, so it is skipped. Bare parameters with no inference node (no
+ * default value) are NOT gated here - they are reported without a fix, mirroring
+ * `@typescript-eslint/typedef`.
+ *
+ * @param {ReportUninferableAsUnreportedParams} params - The parameters object.
+ * @param {TypedefRuleContext} params.ruleContext - The bundled rule context and resolved options.
+ * @param {ResolvedAnnotationTarget | undefined} params.resolved - The resolved annotation pair, or `undefined` when no inference applies.
+ * @returns {boolean} `true` when the node must not be reported, otherwise `false`.
+ */
+function reportUninferableAsUnreported(
+	params: ReportUninferableAsUnreportedParams,
+): boolean {
+	const {
+		ruleContext,
+		resolved,
+	}: ReportUninferableAsUnreportedParams = params;
+
+	if (
+		resolved === undefined
+	) {
+		const alwaysReport: boolean = false;
+		return alwaysReport;
+	}
+
+	const {
+		context,
+	}: TypedefRuleContext = ruleContext;
+
+	const typeText: string | undefined = getInferredTypeText({
+		context,
+		inferenceNode: resolved.inferenceNode,
+	});
+
+	if (
+		typeText === undefined
+	) {
+		logDebug({
+			enabled: ruleContext.options.debug,
+			label: "skip",
+			detail: {
+				nodeType: resolved.annotationTarget.type,
+				reason: "uninferable-type-unreported",
+			},
+		});
+		const unreported: boolean = true;
+		return unreported;
+	}
+
+	const stillReported: boolean = false;
+	return stillReported;
+}
+
 export {
 	reportMissingAnnotation,
+	reportUninferableAsUnreported,
 };

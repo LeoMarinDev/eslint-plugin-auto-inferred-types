@@ -42,7 +42,7 @@ function logDebug(
 			: safeStringify(detail)
 	);
 
-	const line = `[auto-inferred-types] ${label} ${safeDetail}\n`;
+	const line: string = `[auto-inferred-types] ${label} ${safeDetail}\n`;
 
 	process.stderr.write(line);
 }

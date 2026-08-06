@@ -50,7 +50,7 @@ function resolveIdentifiersToModules(
 	const currentFilePath: string = currentSourceFile.fileName.replace(/\\/g, "/");
 
 	for (
-		let nameIndex = 0;
+		let nameIndex: number = 0;
 		nameIndex < identifiers.length;
 		nameIndex++
 	) {
@@ -140,7 +140,7 @@ function findSymbolInAllFiles(
 	let resolved: ts.Symbol | undefined;
 
 	for (
-		let fileIndex = 0;
+		let fileIndex: number = 0;
 		fileIndex < allSourceFiles.length;
 		fileIndex++
 	) {
@@ -240,7 +240,7 @@ function findExportByName(
 	let matched: ts.Symbol | undefined;
 
 	for (
-		let exportIndex = 0;
+		let exportIndex: number = 0;
 		exportIndex < exportSymbols.length;
 		exportIndex++
 	) {
@@ -305,7 +305,7 @@ function symbolHasDeclaration(
 	if (
 		symbol === undefined
 	) {
-		const noSymbol = false;
+		const noSymbol: boolean = false;
 		return noSymbol;
 	}
 
@@ -314,11 +314,11 @@ function symbolHasDeclaration(
 		declarations === undefined
 		|| declarations.length === 0
 	) {
-		const noDeclarations = false;
+		const noDeclarations: boolean = false;
 		return noDeclarations;
 	}
 
-	const hasDeclarations = true;
+	const hasDeclarations: boolean = true;
 	return hasDeclarations;
 }
 

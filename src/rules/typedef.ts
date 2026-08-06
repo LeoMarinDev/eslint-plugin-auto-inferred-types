@@ -27,11 +27,11 @@ import type {
 	TSESLint,
 } from "@typescript-eslint/utils";
 
-const createRule = ESLintUtils.RuleCreator(
+const createRule: ReturnType<typeof ESLintUtils.RuleCreator<unknown>> = ESLintUtils.RuleCreator(
 	(name: string): string => `https://github.com/brainy-builds/eslint-plugin-auto-inferred-types/blob/main/docs/${name}.md`,
 );
 
-const typedefRule = createRule({
+const typedefRule: TSESLint.RuleModule<TypedefMessageIds, [TypedefRuleOptions]> = createRule({
 	name: "typedef",
 	meta: {
 		type: RULE_TYPE_SUGGESTION,

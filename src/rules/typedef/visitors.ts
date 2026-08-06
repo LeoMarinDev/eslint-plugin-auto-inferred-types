@@ -20,6 +20,7 @@ import {
 } from "@utils/debug-log";
 import {
 	getNodeName,
+	isAsExpressionInitializer,
 } from "@utils/typedef-shared";
 
 import type {
@@ -137,6 +138,16 @@ function visitArrayPattern(
 			? node.parent
 			: undefined
 	);
+
+	const isAsAsserted: boolean = isAsExpressionInitializer(
+		declarator?.init ?? undefined,
+	);
+
+	if (
+		isAsAsserted
+	) {
+		return;
+	}
 
 	const inferenceNode: TSESTree.Node | undefined = (
 		declarator !== undefined
@@ -305,6 +316,16 @@ function visitObjectPattern(
 			? node.parent
 			: undefined
 	);
+
+	const isAsAsserted: boolean = isAsExpressionInitializer(
+		declarator?.init ?? undefined,
+	);
+
+	if (
+		isAsAsserted
+	) {
+		return;
+	}
 
 	const inferenceNode: TSESTree.Node | undefined = (
 		declarator !== undefined

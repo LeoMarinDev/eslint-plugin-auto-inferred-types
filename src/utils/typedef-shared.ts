@@ -47,7 +47,7 @@ function isForOfStatementContext(
 ): boolean {
 	let current: TSESTree.Node = node.parent;
 
-	let inForOf = false;
+	let inForOf: boolean = false;
 
 	while (
 		current.type !== AST_NODE_TYPES.Program
@@ -92,7 +92,7 @@ function isAncestorHasTypeAnnotation(
 ): boolean {
 	let ancestor: TSESTree.Node = node.parent;
 
-	let hasAnnotation = false;
+	let hasAnnotation: boolean = false;
 
 	while (
 		ancestor.type !== AST_NODE_TYPES.Program
@@ -139,7 +139,7 @@ function isVariableDeclarationIgnoreFunction(
 		variableDeclarationIgnoreFunction,
 	}: IsVariableDeclarationIgnoreFunctionParams = params;
 
-	let isIgnore = false;
+	let isIgnore: boolean = false;
 
 	if (
 		variableDeclarationIgnoreFunction === true
@@ -153,6 +153,33 @@ function isVariableDeclarationIgnoreFunction(
 	}
 
 	return isIgnore;
+}
+
+/**
+ * Returns `true` when the given node is a `TSAsExpression` (`as` assertion,
+ * most commonly `as const`).
+ *
+ * An `as` assertion is an explicit type the author has already declared, so
+ * the `typedef` rule must not report or annotate the binding - inferring or
+ * widening would contradict the assertion.
+ *
+ * @param {TSESTree.Node | undefined} node - The initializer node to inspect, or `undefined`.
+ * @returns {boolean} `true` when the node is a `TSAsExpression`, otherwise `false`.
+ */
+function isAsExpressionInitializer(
+	node: TSESTree.Node | undefined,
+): boolean {
+	if (
+		node === undefined
+	) {
+		const isNotExpression: boolean = false;
+		return isNotExpression;
+	}
+
+	const isAsExpression: boolean = (
+		node.type === AST_NODE_TYPES.TSAsExpression
+	);
+	return isAsExpression;
 }
 
 /**
@@ -271,8 +298,9 @@ function resolveAnnotationTarget(
 
 export {
 	getNodeName,
-	isForOfStatementContext,
 	isAncestorHasTypeAnnotation,
+	isAsExpressionInitializer,
+	isForOfStatementContext,
 	isVariableDeclarationIgnoreFunction,
 	getInferenceNodeForParameter,
 	resolveAnnotationTarget,

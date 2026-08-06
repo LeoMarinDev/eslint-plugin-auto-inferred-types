@@ -28,7 +28,7 @@ function collectExistingTypeImports(
 	const existing: ModuleNamesMap = new Map<string, Set<string>>();
 
 	for (
-		let statementIndex = 0;
+		let statementIndex: number = 0;
 		statementIndex < programNode.body.length;
 		statementIndex++
 	) {
@@ -74,7 +74,7 @@ function collectAllImportedNames(
 	const names: Set<string> = new Set<string>();
 
 	for (
-		let statementIndex = 0;
+		let statementIndex: number = 0;
 		statementIndex < programNode.body.length;
 		statementIndex++
 	) {
@@ -108,10 +108,10 @@ function collectAllImportedNames(
 function collectImportDeclarationsBySource(
 	programNode: TSESTree.Program,
 ): Map<string, TSESTree.ImportDeclaration> {
-	const result = new Map<string, TSESTree.ImportDeclaration>();
+	const result: Map<string, TSESTree.ImportDeclaration> = new Map<string, TSESTree.ImportDeclaration>();
 
 	for (
-		let statementIndex = 0;
+		let statementIndex: number = 0;
 		statementIndex < programNode.body.length;
 		statementIndex++
 	) {
@@ -146,7 +146,7 @@ function findLastImportDeclaration(
 	let lastImport: TSESTree.ImportDeclaration | undefined;
 
 	for (
-		let statementIndex = 0;
+		let statementIndex: number = 0;
 		statementIndex < programNode.body.length;
 		statementIndex++
 	) {
@@ -180,7 +180,7 @@ function collectSpecifierNames(
 	}: CollectSpecifierNamesParams = params;
 
 	for (
-		let specifierIndex = 0;
+		let specifierIndex: number = 0;
 		specifierIndex < specifiers.length;
 		specifierIndex++
 	) {

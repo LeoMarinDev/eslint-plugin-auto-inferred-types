@@ -7,6 +7,9 @@ import ts from "typescript";
 import {
 	resolveAliasedSymbol,
 } from "@utils/symbol-resolution";
+import {
+	isAsExpressionInitializer,
+} from "@utils/typedef-shared";
 
 import type {
 	GetInferredTypeTextParams,
@@ -42,6 +45,16 @@ function getInferredTypeText(
 		inferenceNode,
 	}: GetInferredTypeTextParams = params;
 
+	const isExplicitlyAsserted: boolean = isAsExpressionInitializer(
+		inferenceNode,
+	);
+	if (
+		isExplicitlyAsserted
+	) {
+		const skippedAsExpression: undefined = undefined;
+		return skippedAsExpression;
+	}
+
 	const services: ParserServicesWithTypeInformation = ESLintUtils.getParserServices(context);
 	const checker: ts.TypeChecker = services.program.getTypeChecker();
 	const type: ts.Type = services.getTypeAtLocation(inferenceNode);
@@ -50,7 +63,7 @@ function getInferredTypeText(
 	if (
 		isAnyType
 	) {
-		const skippedAny = undefined;
+		const skippedAny: undefined = undefined;
 		return skippedAny;
 	}
 
@@ -58,7 +71,7 @@ function getInferredTypeText(
 	if (
 		isNeverType
 	) {
-		const skippedNever = undefined;
+		const skippedNever: undefined = undefined;
 		return skippedNever;
 	}
 
@@ -69,7 +82,7 @@ function getInferredTypeText(
 	if (
 		hasError
 	) {
-		const skippedError = undefined;
+		const skippedError: undefined = undefined;
 		return skippedError;
 	}
 
@@ -92,7 +105,7 @@ function getInferredTypeText(
 	if (
 		isEmptyOrVoid
 	) {
-		const skippedVoid = undefined;
+		const skippedVoid: undefined = undefined;
 		return skippedVoid;
 	}
 
@@ -104,7 +117,7 @@ function getInferredTypeText(
 	if (
 		isErrorLike
 	) {
-		const skippedErrorLike = undefined;
+		const skippedErrorLike: undefined = undefined;
 		return skippedErrorLike;
 	}
 
@@ -115,7 +128,7 @@ function getInferredTypeText(
 		if (
 			isConstInitializer === false
 		) {
-			const skippedNullLet = undefined;
+			const skippedNullLet: undefined = undefined;
 			return skippedNullLet;
 		}
 	}
@@ -146,7 +159,7 @@ function isConstVariableDeclarationInitializer(
 	if (
 		declarator?.type !== AST_NODE_TYPES.VariableDeclarator
 	) {
-		const notDeclarator = false;
+		const notDeclarator: boolean = false;
 		return notDeclarator;
 	}
 
@@ -182,7 +195,7 @@ function widenLiteralTypeAnnotation(
 	if (
 		isStringLiteral
 	) {
-		const widenedString = "string";
+		const widenedString: string = "string";
 		return widenedString;
 	}
 
@@ -190,7 +203,7 @@ function widenLiteralTypeAnnotation(
 	if (
 		isNumberLiteral
 	) {
-		const widenedNumber = "number";
+		const widenedNumber: string = "number";
 		return widenedNumber;
 	}
 
@@ -198,7 +211,7 @@ function widenLiteralTypeAnnotation(
 	if (
 		isBooleanLiteral
 	) {
-		const widenedBoolean = "boolean";
+		const widenedBoolean: string = "boolean";
 		return widenedBoolean;
 	}
 
@@ -249,7 +262,7 @@ function widenUnionLiteralType(
 	if (
 		allStringLiterals
 	) {
-		const widened = "string";
+		const widened: string = "string";
 		return widened;
 	}
 
@@ -264,7 +277,7 @@ function widenUnionLiteralType(
 	if (
 		allNumberLiterals
 	) {
-		const widened = "number";
+		const widened: string = "number";
 		return widened;
 	}
 
@@ -279,11 +292,11 @@ function widenUnionLiteralType(
 	if (
 		allBooleanLiterals
 	) {
-		const widened = "boolean";
+		const widened: string = "boolean";
 		return widened;
 	}
 
-	const notUniform = undefined;
+	const notUniform: undefined = undefined;
 	return notUniform;
 }
 
@@ -341,7 +354,7 @@ function qualifyKnownGlobalType(
 		isReactTypes
 		&& isUnqualified
 	) {
-		const qualified = `React.${typeText}`;
+		const qualified: string = `React.${typeText}`;
 		return qualified;
 	}
 
@@ -350,7 +363,7 @@ function qualifyKnownGlobalType(
 		isJsxPrefixed
 		&& isReactTypes
 	) {
-		const qualified = `React.${typeText}`;
+		const qualified: string = `React.${typeText}`;
 		return qualified;
 	}
 
@@ -378,7 +391,7 @@ function typeContainsError(
 	if (
 		isAnyType
 	) {
-		const hasError = true;
+		const hasError: boolean = true;
 		return hasError;
 	}
 
@@ -387,7 +400,7 @@ function typeContainsError(
 	if (
 		symbol === undefined
 	) {
-		const noError = false;
+		const noError: boolean = false;
 		return noError;
 	}
 
@@ -401,11 +414,11 @@ function typeContainsError(
 		declarations === undefined
 		|| declarations.length === 0
 	) {
-		const hasError = true;
+		const hasError: boolean = true;
 		return hasError;
 	}
 
-	const noError = false;
+	const noError: boolean = false;
 	return noError;
 }
 

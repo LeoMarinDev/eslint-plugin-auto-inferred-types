@@ -26,7 +26,7 @@ function createTypedefRuleContext(
 	const {
 		context,
 		options,
-	} = params;
+	}: { context: Readonly<TSESLint.RuleContext<TypedefMessageIds, [TypedefRuleOptions]>>; options: TypedefRuleOptions; } = params;
 
 	const ruleContext: TypedefRuleContext = {
 		context,

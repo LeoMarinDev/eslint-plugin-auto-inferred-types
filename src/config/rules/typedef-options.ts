@@ -9,6 +9,11 @@ import type {
  * The PascalCase keys are used to build the JSON schema and to index
  * `DEFAULT_OPTIONS`; the camelCase values are what users write in their
  * ESLint config.
+ *
+ * The `as const` object is deliberately left unannotated: the literal
+ * property keys drive the computed property names in the rule schema and a
+ * widened annotation would break that. The `as const` assertion is explicit,
+ * so the plugin's typedef rule skips it.
  */
 export const OPTION_KEYS = {
 	ArrayDestructuring: "arrayDestructuring",

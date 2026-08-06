@@ -24,7 +24,7 @@ function extractTypeIdentifiers(
 	const identifiers: string[] = [];
 
 	for (
-		let tokenIndex = 0;
+		let tokenIndex: number = 0;
 		tokenIndex < tokens.length;
 		tokenIndex++
 	) {
@@ -57,32 +57,32 @@ function isCandidateIdentifier(
 	if (
 		token.length === 0
 	) {
-		const isEmpty = false;
+		const isEmpty: boolean = false;
 		return isEmpty;
 	}
 
 	if (
 		IDENTIFIER_PATTERN.test(token) === false
 	) {
-		const notIdentifier = false;
+		const notIdentifier: boolean = false;
 		return notIdentifier;
 	}
 
 	if (
 		PRIMITIVE_TYPE_NAMES.has(token)
 	) {
-		const isPrimitive = false;
+		const isPrimitive: boolean = false;
 		return isPrimitive;
 	}
 
 	if (
 		GLOBAL_TYPE_NAMES.has(token)
 	) {
-		const isGlobal = false;
+		const isGlobal: boolean = false;
 		return isGlobal;
 	}
 
-	const isValid = true;
+	const isValid: boolean = true;
 	return isValid;
 }
 
